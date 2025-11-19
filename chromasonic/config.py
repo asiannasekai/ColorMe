@@ -1,0 +1,52 @@
+# Chromasonic Configuration
+
+# Audio Settings
+SAMPLE_RATE = 44100
+BIT_DEPTH = 16
+CHANNELS = 1
+
+# Color Extraction
+DEFAULT_NUM_COLORS = 8
+COLOR_SAMPLE_SIZE = 10000
+MAX_IMAGE_SIZE = (800, 600)
+
+# Musical Settings
+DEFAULT_SCALE = "major"
+DEFAULT_TEMPO = 120
+DEFAULT_DURATION = 30.0
+DEFAULT_OCTAVE_RANGE = (3, 6)
+
+# Synthesis Settings
+DEFAULT_SYNTHESIS_METHOD = "additive"
+ENVELOPE_ATTACK = 0.1
+ENVELOPE_DECAY = 0.2
+ENVELOPE_SUSTAIN = 0.7
+ENVELOPE_RELEASE = 0.3
+
+# Effects Settings
+REVERB_ENABLED = True
+REVERB_WET = 0.2
+REVERB_DELAY_TIMES = [0.03, 0.06, 0.09, 0.12]
+REVERB_DECAY_FACTORS = [0.6, 0.4, 0.3, 0.2]
+
+# Web Interface
+WEB_HOST = "127.0.0.1"
+WEB_PORT = 5000
+MAX_UPLOAD_SIZE = 16 * 1024 * 1024  # 16MB
+
+# File Paths
+DATA_DIR = "data"
+MODELS_DIR = "models"
+OUTPUT_DIR = "output"
+TEMP_DIR = "/tmp"
+
+# ML Model Settings
+MARKOV_ORDER = 2
+LSTM_HIDDEN_SIZE = 128
+LSTM_NUM_LAYERS = 2
+TRANSFORMER_NUM_HEADS = 8
+TRANSFORMER_NUM_LAYERS = 6
+
+# Logging
+LOG_LEVEL = "INFO"
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
