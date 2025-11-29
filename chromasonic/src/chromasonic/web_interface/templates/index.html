@@ -799,6 +799,14 @@
         }
         
         function displayAnalysis(data) {
+            // Store colors in proper format for notation
+            if (!data.color_objects && data.colors && data.rgb_colors) {
+                data.color_objects = data.colors.map((hex, index) => ({
+                    hex: hex,
+                    rgb: data.rgb_colors[index]
+                }));
+            }
+            
             // Display colors
             displayColors(data.colors, data.rgb_colors);
             
@@ -1052,7 +1060,13 @@
             
             // Get melody data if available
             const melody = metadata.melody || generateSampleMelody();
-            const colors = currentImageData.colors;
+            
+            // Convert colors to objects format if needed
+            const colors = currentImageData.color_objects || 
+                          currentImageData.colors.map((hex, i) => ({
+                              hex: hex,
+                              rgb: currentImageData.rgb_colors ? currentImageData.rgb_colors[i] : [0,0,0]
+                          }));
             
             // Map notes to colors
             const noteColorMap = mapNotesToColors(melody, colors);
@@ -1096,7 +1110,7 @@
             });
             
             // Create legend
-            const uniqueColors = [...new Map(colors.map(c => [c.hex, c])).values()].slice(0, 6);
+            const uniqueColors = colors.slice(0, 6);
             legend.innerHTML = '';
             
             uniqueColors.forEach(color => {
@@ -1118,7 +1132,15 @@
                 // Map note index to color index
                 const colorIndex = Math.floor((index / melody.length) * colors.length);
                 const color = colors[Math.min(colorIndex, colors.length - 1)];
-                noteColorMap.push(color);
+                
+                // Ensure color has hex property
+                if (typeof color === 'string') {
+                    noteColorMap.push({ hex: color, rgb: [0, 0, 0] });
+                } else if (color && color.hex) {
+                    noteColorMap.push(color);
+                } else {
+                    noteColorMap.push({ hex: '#cccccc', rgb: [204, 204, 204] });
+                }
             });
             
             return noteColorMap;
