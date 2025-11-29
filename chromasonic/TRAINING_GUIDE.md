@@ -9,34 +9,84 @@ The training infrastructure includes:
 - **Training Module** (`training.py`): Training with learning curves, validation, and checkpointing
 - **Testing Module** (`testing.py`): Comprehensive model evaluation and comparison
 - **Training Script** (`train_models.py`): End-to-end training pipeline
+- **Data Loader** (`data_loader.py`): Support for real music datasets (Nottingham folk tunes)
+
+## 🎵 Dataset Options
+
+### Synthetic Data (Default)
+
+Quick training with randomly generated melodies:
+
+```bash
+python train_models.py --dataset synthetic --num-sequences 1000
+```
+
+**Pros:**
+- Fast to generate
+- Good for testing and debugging
+- No download required
+
+**Cons:**
+- Random walk patterns (not musical)
+- Models won't learn real musical structure
+
+### Nottingham Folk Music Dataset (Recommended)
+
+Train on ~1000 real folk melodies for better results:
+
+```bash
+python train_models.py --dataset nottingham --epochs 100
+```
+
+**Pros:**
+- Real musical patterns
+- Better melody structure
+- Models learn actual music theory
+- Produces more musical outputs
+
+**Cons:**
+- Auto-downloads ~5MB dataset on first run
+- Slightly longer training time
+
+**Dataset details:**
+- ~1000 traditional folk tunes in ABC notation
+- Public domain British Isles folk music
+- Auto-downloads and parses on first use
+- Cached after first load
 
 ## 🚀 Quick Start
 
-### Basic Training
-
-Train both LSTM and Transformer models with default settings:
+### Train with Real Music (Recommended)
 
 ```bash
 cd chromasonic
-python train_models.py --epochs 50 --batch-size 32
+python train_models.py --dataset nottingham --epochs 100
+```
+
+### Train with Synthetic Data
+
+```bash
+cd chromasonic
+python train_models.py --dataset synthetic --epochs 50 --num-sequences 1000
 ```
 
 ### Train Specific Model
 
-Train only LSTM:
+Train only LSTM on Nottingham dataset:
 ```bash
-python train_models.py --model lstm --epochs 100
+python train_models.py --model lstm --dataset nottingham --epochs 100
 ```
 
-Train only Transformer:
+Train only Transformer on synthetic data:
 ```bash
-python train_models.py --model transformer --epochs 100
+python train_models.py --model transformer --dataset synthetic --epochs 50
 ```
 
 ### Custom Configuration
 
 ```bash
 python train_models.py \
+    --dataset nottingham \
     --model both \
     --epochs 100 \
     --batch-size 64 \
@@ -44,8 +94,9 @@ python train_models.py \
     --hidden-size 256 \
     --num-layers 3 \
     --dropout 0.3 \
-    --num-sequences 2000 \
     --patience 20 \
+    --min-melody-length 16 \
+    --max-melody-length 128 \
     --output-dir ./my_training_results
 ```
 

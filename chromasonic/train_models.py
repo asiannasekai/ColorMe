@@ -166,7 +166,7 @@ class MelodyTransformer(nn.Module):
         return generated
 
 
-def train_lstm_model(args):
+def train_lstm_model(args, train_data=None, val_data=None):
     """Train LSTM model."""
     print("\n" + "="*80)
     print("Training LSTM Model")
@@ -184,14 +184,15 @@ def train_lstm_model(args):
     print(model)
     print(f"\nTotal parameters: {sum(p.numel() for p in model.parameters()):,}")
     
-    # Create training data
-    print(f"\nGenerating {args.num_sequences} training sequences...")
-    train_data, val_data = create_training_data(
-        num_sequences=args.num_sequences,
-        sequence_length=args.sequence_length,
-        vocab_size=args.vocab_size,
-        train_split=0.8
-    )
+    # Create training data if not provided
+    if train_data is None or val_data is None:
+        print(f"\nGenerating {args.num_sequences} training sequences...")
+        train_data, val_data = create_training_data(
+            num_sequences=args.num_sequences,
+            sequence_length=args.sequence_length,
+            vocab_size=args.vocab_size,
+            train_split=0.8
+        )
     
     print(f"Train sequences: {len(train_data)}")
     print(f"Validation sequences: {len(val_data)}")
@@ -216,7 +217,7 @@ def train_lstm_model(args):
     return model, history
 
 
-def train_transformer_model(args):
+def train_transformer_model(args, train_data=None, val_data=None):
     """Train Transformer model."""
     print("\n" + "="*80)
     print("Training Transformer Model")
@@ -235,14 +236,15 @@ def train_transformer_model(args):
     print(model)
     print(f"\nTotal parameters: {sum(p.numel() for p in model.parameters()):,}")
     
-    # Create training data
-    print(f"\nGenerating {args.num_sequences} training sequences...")
-    train_data, val_data = create_training_data(
-        num_sequences=args.num_sequences,
-        sequence_length=args.sequence_length,
-        vocab_size=args.vocab_size,
-        train_split=0.8
-    )
+    # Create training data if not provided
+    if train_data is None or val_data is None:
+        print(f"\nGenerating {args.num_sequences} training sequences...")
+        train_data, val_data = create_training_data(
+            num_sequences=args.num_sequences,
+            sequence_length=args.sequence_length,
+            vocab_size=args.vocab_size,
+            train_split=0.8
+        )
     
     print(f"Train sequences: {len(train_data)}")
     print(f"Validation sequences: {len(val_data)}")
@@ -304,12 +306,21 @@ def main():
     )
     
     # Data parameters
+    parser.add_argument('--dataset', type=str, default='synthetic',
+                       choices=['synthetic', 'nottingham'],
+                       help='Dataset to use for training')
+    parser.add_argument('--data-dir', type=str, default=None,
+                       help='Directory for dataset storage (default: ./data/nottingham)')
     parser.add_argument('--num-sequences', type=int, default=1000,
-                       help='Number of training sequences to generate')
+                       help='Number of training sequences to generate (synthetic only)')
     parser.add_argument('--num-test-sequences', type=int, default=200,
-                       help='Number of test sequences')
+                       help='Number of test sequences (synthetic only)')
     parser.add_argument('--sequence-length', type=int, default=32,
-                       help='Length of each sequence')
+                       help='Length of each sequence (synthetic only)')
+    parser.add_argument('--min-melody-length', type=int, default=16,
+                       help='Minimum melody length for real datasets')
+    parser.add_argument('--max-melody-length', type=int, default=128,
+                       help='Maximum melody length for real datasets')
     parser.add_argument('--vocab-size', type=int, default=88,
                        help='Vocabulary size (number of possible notes)')
     
@@ -367,15 +378,52 @@ def main():
     for arg, value in sorted(vars(args).items()):
         print(f"  {arg}: {value}")
     
+    # Load or generate training data
+    print("\n" + "="*80)
+    if args.dataset == 'nottingham':
+        print("Loading Nottingham Dataset")
+        print("="*80)
+        from src.chromasonic.melody_generation.training import load_music_dataset
+        
+        data_dir = Path(args.data_dir) if args.data_dir else None
+        train_data, val_data, test_data = load_music_dataset(
+            dataset='nottingham',
+            data_dir=data_dir,
+            train_ratio=0.8,
+            val_ratio=0.1,
+            min_length=args.min_melody_length,
+            max_length=args.max_melody_length
+        )
+        print(f"\n✓ Loaded: {len(train_data)} train, {len(val_data)} val, {len(test_data)} test melodies")
+        
+    else:  # synthetic
+        print("Generating Synthetic Data")
+        print("="*80)
+        train_data, val_data = create_training_data(
+            num_sequences=args.num_sequences,
+            sequence_length=args.sequence_length,
+            vocab_size=args.vocab_size,
+            train_split=0.8
+        )
+        
+        # Generate test data
+        test_data, _ = create_training_data(
+            num_sequences=args.num_test_sequences,
+            sequence_length=args.sequence_length,
+            vocab_size=args.vocab_size,
+            train_split=1.0
+        )
+        print(f"\n✓ Generated: {len(train_data)} train, {len(val_data)} val, {len(test_data)} test sequences")
+    
     # Train models
     lstm_model = None
     transformer_model = None
     
     if args.model in ['lstm', 'both']:
-        lstm_model, lstm_history = train_lstm_model(args)
+        lstm_model, lstm_history = train_lstm_model(args, train_data, val_data)
     
     if args.model in ['transformer', 'both']:
-        transformer_model, transformer_history = train_transformer_model(args)
+        transformer_model, transformer_history = train_transformer_model(args, train_data, val_data)
     
     # Compare models if both were trained
     if lstm_model and transformer_model:

@@ -22,6 +22,12 @@ except ImportError:
     HAS_TORCH = False
     nn = None
 
+try:
+    from .data_loader import NottinghamDataLoader, split_dataset
+    HAS_DATA_LOADER = True
+except ImportError:
+    HAS_DATA_LOADER = False
+
 
 class MelodyDataset:
     """Dataset for melody sequences."""
@@ -694,6 +700,70 @@ class ModelTrainer:
         
         self.logger.info(f"Loaded checkpoint from epoch {checkpoint['epoch']}")
         return checkpoint['epoch']
+
+
+def load_music_dataset(
+    dataset: str = 'nottingham',
+    data_dir: Optional[Path] = None,
+    train_ratio: float = 0.8,
+    val_ratio: float = 0.1,
+    min_length: int = 16,
+    max_length: Optional[int] = 128
+) -> Tuple[List[List[int]], List[List[int]], List[List[int]]]:
+    """
+    Load real music dataset for training.
+    
+    Args:
+        dataset: Dataset name ('nottingham' supported)
+        data_dir: Directory to store/load dataset
+        train_ratio: Fraction for training
+        val_ratio: Fraction for validation
+        min_length: Minimum melody length
+        max_length: Maximum melody length
+        
+    Returns:
+        Tuple of (train_data, val_data, test_data)
+    """
+    if not HAS_DATA_LOADER:
+        raise ImportError("data_loader module required for loading music datasets")
+    
+    if dataset.lower() == 'nottingham':
+        logger = logging.getLogger(__name__)
+        logger.info("Loading Nottingham dataset...")
+        
+        loader = NottinghamDataLoader(data_dir=data_dir)
+        
+        # Try loading processed data first
+        processed_path = loader.data_dir / "processed_melodies.json"
+        if processed_path.exists():
+            logger.info(f"Loading processed data from {processed_path}")
+            loader.load_processed_data(processed_path)
+            melodies = loader.melodies
+        else:
+            # Download and parse
+            loader.download_dataset()
+            melodies, metadata = loader.load_dataset()
+            
+            # Save processed data for faster loading next time
+            loader.save_processed_data(processed_path)
+        
+        # Show statistics
+        stats = loader.get_statistics()
+        logger.info(f"Dataset statistics: {stats}")
+        
+        # Split dataset
+        train, val, test = split_dataset(
+            melodies,
+            train_ratio=train_ratio,
+            val_ratio=val_ratio,
+            min_length=min_length,
+            max_length=max_length
+        )
+        
+        return train, val, test
+    
+    else:
+        raise ValueError(f"Unknown dataset: {dataset}")
 
 
 def create_training_data(
