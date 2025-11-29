@@ -94,12 +94,13 @@ class TrainingHistory:
             self.best_val_loss = val_loss
             self.best_epoch = epoch
     
-    def plot_curves(self, save_path: Optional[Path] = None):
+    def plot_curves(self, save_path: Optional[Path] = None, model_name: str = "model"):
         """
         Plot training and validation curves.
         
         Args:
             save_path: Optional path to save the plot
+            model_name: Name of the model for description file
         """
         fig, axes = plt.subplots(2, 2, figsize=(15, 10))
         fig.suptitle('Training History', fontsize=16, fontweight='bold')
@@ -144,10 +145,201 @@ class TrainingHistory:
         plt.tight_layout()
         
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Training curves saved to {save_path}")
+            # Ensure graphs directory exists
+            save_path = Path(save_path)
+            graphs_dir = save_path.parent / "graphs"
+            graphs_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Save plot in graphs folder
+            graph_path = graphs_dir / save_path.name
+            plt.savefig(graph_path, dpi=300, bbox_inches='tight')
+            print(f"Training curves saved to {graph_path}")
+            
+            # Generate description file
+            desc_path = graph_path.with_suffix('.txt')
+            self._save_description(desc_path, model_name)
+            print(f"Graph description saved to {desc_path}")
         else:
             plt.show()
+    
+    def _save_description(self, path: Path, model_name: str):
+        """Generate and save description file for training curves."""
+        # Calculate final metrics
+        final_train_loss = self.train_losses[-1] if self.train_losses else 0
+        final_val_loss = self.val_losses[-1] if self.val_losses else 0
+        final_train_acc = self.train_accuracies[-1] if self.train_accuracies else 0
+        final_val_acc = self.val_accuracies[-1] if self.val_accuracies else 0
+        
+        # Calculate improvement
+        if len(self.train_losses) > 1:
+            train_loss_improvement = self.train_losses[0] - final_train_loss
+            val_loss_improvement = self.val_losses[0] - final_val_loss
+        else:
+            train_loss_improvement = 0
+            val_loss_improvement = 0
+        
+        # Assess overfitting
+        generalization_gap = final_train_loss - final_val_loss
+        if generalization_gap < 0.05:
+            overfitting_status = "No overfitting detected - model generalizes well"
+        elif generalization_gap < 0.15:
+            overfitting_status = "Minimal overfitting - acceptable generalization"
+        elif generalization_gap < 0.3:
+            overfitting_status = "Moderate overfitting - consider regularization"
+        else:
+            overfitting_status = "Significant overfitting - model memorizing training data"
+        
+        # Assess convergence
+        if len(self.val_losses) >= 5:
+            recent_val_change = abs(self.val_losses[-1] - self.val_losses[-5])
+            if recent_val_change < 0.01:
+                convergence_status = "Model has converged - minimal improvement in recent epochs"
+            elif recent_val_change < 0.05:
+                convergence_status = "Model is converging - slow improvement"
+            else:
+                convergence_status = "Model still improving - continue training"
+        else:
+            convergence_status = "Not enough epochs to assess convergence"
+        
+        description = f"""TRAINING CURVES ANALYSIS - {model_name}
+{'=' * 80}
+
+GRAPH OVERVIEW:
+This graph shows the training history across {len(self.epochs)} epochs.
+It contains 4 subplots that visualize different aspects of the training process.
+
+{'=' * 80}
+SUBPLOT 1: LOSS CURVES (Top Left)
+{'=' * 80}
+
+What it shows:
+- Blue line: Training loss over epochs
+- Orange line: Validation loss over epochs  
+- Red dashed line: Best epoch (epoch {self.best_epoch})
+
+Key Metrics:
+- Initial Train Loss: {self.train_losses[0]:.4f}
+- Final Train Loss: {final_train_loss:.4f}
+- Train Loss Improvement: {train_loss_improvement:.4f}
+
+- Initial Val Loss: {self.val_losses[0]:.4f}
+- Final Val Loss: {final_val_loss:.4f}
+- Val Loss Improvement: {val_loss_improvement:.4f}
+
+- Best Val Loss: {self.best_val_loss:.4f} (at epoch {self.best_epoch})
+
+Interpretation:
+✓ Both losses should trend downward (indicates learning)
+✓ Losses converging indicates model is learning the patterns
+✗ If validation loss increases while training decreases → overfitting
+
+Current Status: {overfitting_status}
+
+{'=' * 80}
+SUBPLOT 2: ACCURACY CURVES (Top Right)
+{'=' * 80}
+
+What it shows:
+- Training and validation accuracy over time
+- Higher is better (range: 0.0 to 1.0)
+
+Key Metrics:
+- Final Train Accuracy: {final_train_acc:.2%}
+- Final Val Accuracy: {final_val_acc:.2%}
+- Accuracy Gap: {abs(final_train_acc - final_val_acc):.2%}
+
+Interpretation:
+✓ Both accuracies should increase over time
+✓ Gap < 5% indicates good generalization
+✗ Large gap indicates overfitting (model memorizing training data)
+
+{'=' * 80}
+SUBPLOT 3: LEARNING RATE SCHEDULE (Bottom Left)
+{'=' * 80}
+
+What it shows:
+- Learning rate changes during training (log scale)
+- Shows if/when learning rate was reduced
+
+Key Metrics:
+- Initial LR: {self.learning_rates[0]:.6f}
+- Final LR: {self.learning_rates[-1]:.6f}
+
+Interpretation:
+✓ Decreasing LR helps model fine-tune in later epochs
+✓ Plateau indicates stable learning rate
+✗ If LR drops too early, model may converge prematurely
+
+{'=' * 80}
+SUBPLOT 4: GENERALIZATION GAP (Bottom Right)
+{'=' * 80}
+
+What it shows:
+- Difference between training and validation loss
+- Purple line crossing zero = overfitting point
+
+Key Metrics:
+- Current Gap: {generalization_gap:.4f}
+
+Interpretation:
+✓ Gap near 0: Model generalizes well
+✓ Slightly negative: Validation better than training (ideal)
+✗ Large positive gap: Overfitting (model memorizes training data)
+✗ Increasing gap over time: Progressive overfitting
+
+Current Generalization: {generalization_gap:.4f}
+
+{'=' * 80}
+OVERALL ASSESSMENT
+{'=' * 80}
+
+Convergence: {convergence_status}
+
+Overfitting: {overfitting_status}
+
+Recommendations:
+"""
+        
+        # Add specific recommendations
+        recommendations = []
+        
+        if generalization_gap > 0.3:
+            recommendations.append("• Increase dropout rate or add regularization")
+            recommendations.append("• Reduce model complexity (fewer layers/units)")
+            recommendations.append("• Collect more training data")
+        
+        if final_val_acc < 0.5:
+            recommendations.append("• Model is underperforming - consider different architecture")
+            recommendations.append("• Try increasing model capacity or training longer")
+        
+        if len(self.val_losses) >= 5 and abs(self.val_losses[-1] - self.val_losses[-5]) < 0.01:
+            recommendations.append("• Training has plateaued - can stop training")
+            recommendations.append("• Use early stopping to save time in future runs")
+        
+        if not recommendations:
+            recommendations.append("• Training appears healthy - continue current approach")
+            recommendations.append("• Monitor performance on test set for final evaluation")
+        
+        description += "\n".join(recommendations)
+        
+        description += f"""\n
+{'=' * 80}
+NEXT STEPS
+{'=' * 80}
+
+1. Review the best model checkpoint from epoch {self.best_epoch}
+2. Run comprehensive testing on held-out test set
+3. Compare with other model architectures
+4. Evaluate generated melodies qualitatively
+5. Consider hyperparameter tuning if performance is suboptimal
+
+{'=' * 80}
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+{'=' * 80}
+"""
+        
+        with open(path, 'w') as f:
+            f.write(description)
     
     def save(self, path: Path):
         """Save training history to JSON."""
@@ -337,7 +529,8 @@ class ModelTrainer:
             
             # Plot and save learning curves
             self.history.plot_curves(
-                checkpoint_dir / f"{self.model_name}_curves.png"
+                checkpoint_dir / f"{self.model_name}_curves.png",
+                model_name=self.model_name
             )
         
         self.logger.info("Training completed!")

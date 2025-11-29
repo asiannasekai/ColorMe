@@ -382,6 +382,12 @@ class ModelTester:
         if not metrics:
             return
         
+        # Ensure graphs directory exists
+        path = Path(path)
+        graphs_dir = path.parent / "graphs"
+        graphs_dir.mkdir(parents=True, exist_ok=True)
+        graph_path = graphs_dir / path.name
+        
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
         
         # Bar chart of metrics
@@ -413,8 +419,229 @@ class ModelTester:
             ax2.grid(True)
         
         plt.tight_layout()
-        plt.savefig(path, dpi=300, bbox_inches='tight')
-        self.logger.info(f"Test plots saved to {path}")
+        plt.savefig(graph_path, dpi=300, bbox_inches='tight')
+        self.logger.info(f"Test plots saved to {graph_path}")
+        
+        # Generate description file
+        desc_path = graph_path.with_suffix('.txt')
+        self._save_test_description(desc_path, metrics)
+        self.logger.info(f"Test description saved to {desc_path}")
+    
+    def _save_test_description(self, path: Path, metrics: Dict[str, float]):
+        """Generate and save description file for test results."""
+        from datetime import datetime
+        
+        # Get metric values
+        accuracy = metrics.get('accuracy', 0.0)
+        perplexity = metrics.get('perplexity', 0.0)
+        diversity = metrics.get('diversity', 0.0)
+        coherence = metrics.get('coherence', 0.0)
+        musicality = metrics.get('musicality', 0.0)
+        
+        # Assess each metric
+        def assess_metric(value, thresholds):
+            """Assess metric based on thresholds (excellent, good, needs_improvement)."""
+            if value >= thresholds[0]:
+                return "Excellent"
+            elif value >= thresholds[1]:
+                return "Good"
+            else:
+                return "Needs Improvement"
+        
+        accuracy_assessment = assess_metric(accuracy, [0.7, 0.5])
+        diversity_assessment = assess_metric(diversity, [0.7, 0.5])
+        coherence_assessment = assess_metric(coherence, [0.7, 0.5])
+        musicality_assessment = assess_metric(musicality, [0.7, 0.5])
+        
+        # Perplexity is inverse (lower is better)
+        if perplexity < 10:
+            perplexity_assessment = "Excellent"
+        elif perplexity < 50:
+            perplexity_assessment = "Good"
+        else:
+            perplexity_assessment = "Needs Improvement"
+        
+        overall_score = self.test_results.get('overall_score', 0.0)
+        
+        description = f"""TEST RESULTS ANALYSIS - {self.model_name}
+{'=' * 80}
+
+GRAPH OVERVIEW:
+These visualizations show the comprehensive test performance of {self.model_name}
+across multiple evaluation metrics.
+
+{'=' * 80}
+LEFT PLOT: DETAILED METRICS BAR CHART
+{'=' * 80}
+
+What it shows:
+- Individual performance scores for each evaluation metric
+- All metrics scaled to 0-1 range (higher is better, except perplexity)
+- Bars show absolute performance on each dimension
+
+Metric Breakdown:
+
+1. ACCURACY: {accuracy:.4f} ({accuracy_assessment})
+   - Measures: Next-note prediction correctness
+   - Interpretation:
+     ✓ >0.70: Model predicts notes very accurately
+     ✓ 0.50-0.70: Reasonable prediction ability
+     ✗ <0.50: Struggling to learn patterns
+   Current: {accuracy_assessment} - Model {'excels at' if accuracy >= 0.7 else 'shows moderate' if accuracy >= 0.5 else 'struggles with'} predicting next notes
+
+2. PERPLEXITY: {perplexity:.2f} ({perplexity_assessment})
+   - Measures: Model confidence (lower is better)
+   - Interpretation:
+     ✓ <10: Very confident predictions
+     ✓ 10-50: Moderate confidence
+     ✗ >50: Uncertain/confused
+   Current: {perplexity_assessment} - Model is {'very confident' if perplexity < 10 else 'moderately confident' if perplexity < 50 else 'uncertain'} in predictions
+
+3. DIVERSITY: {diversity:.4f} ({diversity_assessment})
+   - Measures: Variety in generated melodies
+   - Interpretation:
+     ✓ >0.70: High variety, creative outputs
+     ✓ 0.50-0.70: Balanced repetition/variation
+     ✗ <0.50: Too repetitive, limited creativity
+   Current: {diversity_assessment} - Generated melodies are {'highly varied' if diversity >= 0.7 else 'moderately varied' if diversity >= 0.5 else 'quite repetitive'}
+
+4. COHERENCE: {coherence:.4f} ({coherence_assessment})
+   - Measures: Melodic smoothness and logical flow
+   - Interpretation:
+     ✓ >0.70: Smooth, singable melodies
+     ✓ 0.50-0.70: Acceptable flow
+     ✗ <0.50: Disjointed, random-sounding
+   Current: {coherence_assessment} - Melodies are {'very smooth' if coherence >= 0.7 else 'moderately smooth' if coherence >= 0.5 else 'somewhat disjointed'}
+
+5. MUSICALITY: {musicality:.4f} ({musicality_assessment})
+   - Measures: Overall musical structure quality
+   - Interpretation:
+     ✓ >0.70: Strong musical structure (phrases, contours)
+     ✓ 0.50-0.70: Some musical features present
+     ✗ <0.50: Lacks musical organization
+   Current: {musicality_assessment} - {'Strong' if musicality >= 0.7 else 'Moderate' if musicality >= 0.5 else 'Weak'} musical structure
+
+{'=' * 80}
+RIGHT PLOT: PERFORMANCE RADAR CHART
+{'=' * 80}
+
+What it shows:
+- Multi-dimensional performance profile
+- Larger coverage = better overall performance
+- Shape shows strengths and weaknesses
+
+Interpretation:
+✓ Balanced polygon: Well-rounded model
+✓ Large area: Strong overall performance
+✗ Spiky shape: Imbalanced (strong in some areas, weak in others)
+✗ Small area: Weak overall performance
+
+Current Profile:
+- Area coverage: {'Large' if overall_score > 0.7 else 'Medium' if overall_score > 0.5 else 'Small'}
+- Balance: {'Well-balanced' if max(metrics.values()) - min(metrics.values()) < 0.3 else 'Some imbalance detected'}
+
+{'=' * 80}
+OVERALL ASSESSMENT
+{'=' * 80}
+
+Overall Score: {overall_score:.4f}
+
+Performance Rating:
+"""
+        
+        if overall_score >= 0.7:
+            rating = "EXCELLENT - Model performs well across all metrics"
+        elif overall_score >= 0.5:
+            rating = "GOOD - Model shows solid performance with room for improvement"
+        else:
+            rating = "NEEDS IMPROVEMENT - Model requires optimization"
+        
+        description += rating + "\n\n"
+        
+        # Identify strengths and weaknesses
+        description += "Strengths:\n"
+        strengths = [k for k, v in metrics.items() if isinstance(v, float) and v >= 0.6]
+        if strengths:
+            for strength in strengths:
+                description += f"  ✓ {strength.capitalize()}: {metrics[strength]:.4f}\n"
+        else:
+            description += "  • No standout strengths identified\n"
+        
+        description += "\nWeaknesses:\n"
+        weaknesses = [k for k, v in metrics.items() if isinstance(v, float) and v < 0.5]
+        if weaknesses:
+            for weakness in weaknesses:
+                description += f"  ✗ {weakness.capitalize()}: {metrics[weakness]:.4f}\n"
+        else:
+            description += "  • No major weaknesses identified\n"
+        
+        # Recommendations
+        description += f"""\n{'=' * 80}
+RECOMMENDATIONS
+{'=' * 80}
+
+"""
+        
+        recommendations = []
+        
+        if accuracy < 0.5:
+            recommendations.append("• Improve accuracy: Train longer or use more training data")
+            recommendations.append("• Consider increasing model capacity (more layers/units)")
+        
+        if diversity < 0.5:
+            recommendations.append("• Increase diversity: Add temperature/sampling randomness")
+            recommendations.append("• Reduce repetition in training data")
+        
+        if coherence < 0.5:
+            recommendations.append("• Improve coherence: Add constraints for stepwise motion")
+            recommendations.append("• Train on more musical data with better structure")
+        
+        if musicality < 0.5:
+            recommendations.append("• Enhance musicality: Incorporate music theory rules")
+            recommendations.append("• Add phrase structure constraints during generation")
+        
+        if perplexity > 50:
+            recommendations.append("• Reduce perplexity: Model needs more training")
+            recommendations.append("• Check training data quality and variety")
+        
+        if not recommendations:
+            recommendations.append("• Model performs well - ready for production use")
+            recommendations.append("• Consider A/B testing with other models")
+            recommendations.append("• Collect user feedback for further refinement")
+        
+        description += "\n".join(recommendations)
+        
+        description += f"""\n
+{'=' * 80}
+COMPARISON WITH BASELINES
+{'=' * 80}
+
+Expected Performance Ranges:
+
+• Markov Chain Baseline: 0.3-0.5 overall
+• LSTM Models: 0.5-0.7 overall  
+• Transformer Models: 0.6-0.8 overall
+• Human Composers: 0.8-1.0 overall
+
+Your Model ({self.model_name}): {overall_score:.4f}
+
+{'=' * 80}
+NEXT STEPS
+{'=' * 80}
+
+1. Compare with other model architectures
+2. Listen to generated samples qualitatively
+3. Conduct user studies for subjective evaluation
+4. If performance is good, deploy to production
+5. If performance is poor, iterate on architecture/training
+
+{'=' * 80}
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+{'=' * 80}
+"""
+        
+        with open(path, 'w') as f:
+            f.write(description)
     
     def _print_results(self):
         """Print formatted test results."""
@@ -495,6 +722,12 @@ class ModelComparison:
     
     def _plot_comparison(self, path: Path):
         """Plot model comparison."""
+        # Ensure graphs directory exists
+        path = Path(path)
+        graphs_dir = path.parent / "graphs"
+        graphs_dir.mkdir(parents=True, exist_ok=True)
+        graph_path = graphs_dir / path.name
+        
         fig, axes = plt.subplots(1, 2, figsize=(16, 6))
         
         # Prepare data
@@ -540,8 +773,216 @@ class ModelComparison:
                         ha='center', va='bottom', fontweight='bold')
         
         plt.tight_layout()
-        plt.savefig(path, dpi=300, bbox_inches='tight')
-        self.logger.info(f"Comparison plot saved to {path}")
+        plt.savefig(graph_path, dpi=300, bbox_inches='tight')
+        self.logger.info(f"Comparison plot saved to {graph_path}")
+        
+        # Generate description file
+        desc_path = graph_path.with_suffix('.txt')
+        self._save_comparison_description(desc_path)
+        self.logger.info(f"Comparison description saved to {desc_path}")
+    
+    def _save_comparison_description(self, path: Path):
+        """Generate and save description file for model comparison."""
+        from datetime import datetime
+        
+        model_names = list(self.comparison_results.keys())
+        
+        if not model_names:
+            return
+        
+        # Find best and worst models
+        best_model = max(model_names, key=lambda x: self.comparison_results[x]['overall_score'])
+        worst_model = min(model_names, key=lambda x: self.comparison_results[x]['overall_score'])
+        
+        best_score = self.comparison_results[best_model]['overall_score']
+        worst_score = self.comparison_results[worst_model]['overall_score']
+        
+        description = f"""MODEL COMPARISON ANALYSIS
+{'=' * 80}
+
+GRAPH OVERVIEW:
+This visualization compares the performance of {len(model_names)} models
+side-by-side across multiple evaluation metrics.
+
+Models Compared:
+"""
+        
+        for i, name in enumerate(model_names, 1):
+            score = self.comparison_results[name]['overall_score']
+            description += f"  {i}. {name}: {score:.4f}\n"
+        
+        description += f"""\n{'=' * 80}
+LEFT PLOT: DETAILED METRIC COMPARISON
+{'=' * 80}
+
+What it shows:
+- Grouped bar chart showing each model's performance on each metric
+- Each color represents a different model
+- Bars side-by-side allow direct comparison
+
+How to interpret:
+✓ Taller bars are better (except for perplexity - lower is better)
+✓ Look for consistency across metrics (balanced performance)
+✓ Large differences indicate clear winner/loser on that metric
+
+Key Findings:
+
+"""
+        
+        # Analyze each metric
+        metrics = list(self.comparison_results[model_names[0]]['metrics'].keys())
+        numeric_metrics = [
+            m for m in metrics 
+            if isinstance(self.comparison_results[model_names[0]]['metrics'][m], (int, float))
+        ]
+        
+        for metric in numeric_metrics:
+            values = {name: self.comparison_results[name]['metrics'][metric] 
+                     for name in model_names}
+            best_on_metric = max(values, key=values.get)
+            worst_on_metric = min(values, key=values.get)
+            
+            description += f"\n{metric.upper()}:\n"
+            description += f"  Best: {best_on_metric} ({values[best_on_metric]:.4f})\n"
+            description += f"  Worst: {worst_on_metric} ({values[worst_on_metric]:.4f})\n"
+            description += f"  Spread: {values[best_on_metric] - values[worst_on_metric]:.4f}\n"
+        
+        description += f"""\n{'=' * 80}
+RIGHT PLOT: OVERALL SCORES COMPARISON
+{'=' * 80}
+
+What it shows:
+- Single overall score for each model (average of all metrics)
+- Color-coded bars for visual distinction
+- Value labels on top of each bar
+
+How to interpret:
+✓ Higher score = better overall performance
+✓ Score > 0.7: Excellent model
+✓ Score 0.5-0.7: Good model
+✗ Score < 0.5: Needs improvement
+
+Rankings:
+
+"""
+        
+        # Sort by score
+        sorted_models = sorted(model_names, 
+                             key=lambda x: self.comparison_results[x]['overall_score'], 
+                             reverse=True)
+        
+        for i, name in enumerate(sorted_models, 1):
+            score = self.comparison_results[name]['overall_score']
+            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else "  "
+            description += f"  {medal} {i}. {name}: {score:.4f}\n"
+        
+        description += f"""\n{'=' * 80}
+DETAILED ANALYSIS
+{'=' * 80}
+
+Best Model: {best_model} (Score: {best_score:.4f})
+"""
+        
+        # Analyze why best model is best
+        best_strengths = []
+        for metric in numeric_metrics:
+            values = {name: self.comparison_results[name]['metrics'][metric] 
+                     for name in model_names}
+            if self.comparison_results[best_model]['metrics'][metric] == max(values.values()):
+                best_strengths.append(metric)
+        
+        description += f"\nStrengths of {best_model}:\n"
+        if best_strengths:
+            for strength in best_strengths:
+                value = self.comparison_results[best_model]['metrics'][strength]
+                description += f"  ✓ Best {strength}: {value:.4f}\n"
+        else:
+            description += "  • Consistently good across all metrics\n"
+        
+        description += f"\nWorst Model: {worst_model} (Score: {worst_score:.4f})\n"
+        
+        # Analyze weaknesses
+        worst_weaknesses = []
+        for metric in numeric_metrics:
+            values = {name: self.comparison_results[name]['metrics'][metric] 
+                     for name in model_names}
+            if self.comparison_results[worst_model]['metrics'][metric] == min(values.values()):
+                worst_weaknesses.append(metric)
+        
+        description += f"\nWeaknesses of {worst_model}:\n"
+        if worst_weaknesses:
+            for weakness in worst_weaknesses:
+                value = self.comparison_results[worst_model]['metrics'][weakness]
+                description += f"  ✗ Worst {weakness}: {value:.4f}\n"
+        else:
+            description += "  • No single metric is worst, but overall score is lowest\n"
+        
+        # Performance gap analysis
+        gap = best_score - worst_score
+        description += f"""\n{'=' * 80}
+PERFORMANCE GAP ANALYSIS
+{'=' * 80}
+
+Score Difference: {gap:.4f}
+
+"""
+        
+        if gap < 0.1:
+            description += "Interpretation: Models perform very similarly\n"
+            description += "  • Differences may not be statistically significant\n"
+            description += "  • Consider other factors (speed, complexity) for selection\n"
+            description += "  • A/B testing may be needed to choose\n"
+        elif gap < 0.2:
+            description += "Interpretation: Moderate performance difference\n"
+            description += f"  • {best_model} has a clear but not overwhelming advantage\n"
+            description += "  • Both models could be viable for production\n"
+        else:
+            description += "Interpretation: Significant performance difference\n"
+            description += f"  • {best_model} is clearly superior\n"
+            description += f"  • {worst_model} needs substantial improvement\n"
+            description += "  • Strong recommendation to use best model\n"
+        
+        description += f"""\n{'=' * 80}
+RECOMMENDATIONS
+{'=' * 80}
+
+Production Deployment:
+  → Use: {best_model}
+  → Reason: Highest overall score ({best_score:.4f})
+
+Model Selection Criteria:
+"""
+        
+        # Provide selection criteria
+        if gap > 0.2:
+            description += f"  • Clear winner: Deploy {best_model}\n"
+        else:
+            description += "  • Close competition: Consider other factors:\n"
+            description += "    - Inference speed\n"
+            description += "    - Model size and memory requirements\n"
+            description += "    - Training/maintenance costs\n"
+            description += "    - Specific use case requirements\n"
+        
+        description += f"""\nFurther Investigation:
+  1. Listen to generated samples from each model qualitatively
+  2. Conduct user studies for subjective preferences
+  3. Test on diverse image inputs (landscapes, portraits, abstract)
+  4. Measure inference time and resource usage
+  5. Evaluate robustness to edge cases
+
+Next Steps:
+  • If satisfied: Deploy {best_model} to production
+  • If not satisfied: Continue model development and training
+  • Consider ensemble methods combining multiple models
+  • Collect real user feedback and iterate
+
+{'=' * 80}
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+{'=' * 80}
+"""
+        
+        with open(path, 'w') as f:
+            f.write(description)
     
     def _print_comparison(self):
         """Print formatted comparison results."""
