@@ -380,6 +380,7 @@
         }
         
         .model-markov { background: #f0f9ff; color: #0369a1; border: 1px solid #e0f2fe; }
+        .model-rnn { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
         .model-lstm { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
         .model-transformer { background: #fef3f2; color: #dc2626; border: 1px solid #fee2e2; }
         
@@ -459,14 +460,21 @@
             font-size: 0.875rem;
             font-weight: 600;
             color: #495057;
-            margin-bottom: 12px;
-            text-align: center;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         
         .notation-scroll {
             overflow-x: auto;
             overflow-y: hidden;
             max-height: 200px;
+            scroll-behavior: smooth;
+        }
+        
+        .notation-scroll.nowrap .notation-staff {
+            flex-wrap: nowrap;
         }
         
         .notation-staff {
@@ -479,6 +487,30 @@
             border-radius: 8px;
             align-items: flex-end;
             position: relative;
+        }
+        
+        .scroll-toggle {
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .scroll-toggle:hover {
+            background: #007aff;
+            color: white;
+            border-color: #007aff;
+        }
+        
+        .scroll-toggle.active {
+            background: #007aff;
+            color: white;
+            border-color: #007aff;
         }
         
         .staff-line {
@@ -506,6 +538,20 @@
             z-index: 10;
         }
         
+        .color-note.playing {
+            transform: translateY(-8px) scale(1.2);
+            box-shadow: 0 8px 16px rgba(0, 122, 255, 0.5);
+            z-index: 20;
+            border-color: #007aff;
+            border-width: 3px;
+            animation: pulse 0.3s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translateY(-8px) scale(1.2); }
+            50% { transform: translateY(-10px) scale(1.25); }
+        }
+        
         .color-note::after {
             content: attr(data-note);
             position: absolute;
@@ -519,7 +565,8 @@
             transition: opacity 0.2s;
         }
         
-        .color-note:hover::after {
+        .color-note:hover::after,
+        .color-note.playing::after {
             opacity: 1;
         }
         
@@ -532,6 +579,123 @@
             padding-top: 12px;
             border-top: 1px solid #dee2e6;
             font-size: 0.75rem;
+        }
+        
+        /* Model Parameters Section */
+        .model-parameters {
+            margin: 15px 0;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .parameters-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            padding: 4px;
+            transition: background 0.2s;
+            border-radius: 6px;
+        }
+        
+        .parameters-toggle:hover {
+            background: #e9ecef;
+        }
+        
+        .parameters-toggle-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .parameters-toggle-icon {
+            font-size: 0.75rem;
+            transition: transform 0.2s;
+        }
+        
+        .parameters-toggle-icon.expanded {
+            transform: rotate(90deg);
+        }
+        
+        .parameters-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .parameters-content.expanded {
+            max-height: 500px;
+            padding-top: 12px;
+        }
+        
+        .parameter-group {
+            margin-bottom: 12px;
+        }
+        
+        .parameter-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+        
+        .parameter-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            background: white;
+            transition: border-color 0.2s;
+        }
+        
+        .parameter-input:focus {
+            outline: none;
+            border-color: #007aff;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+        
+        .parameter-value {
+            display: inline-block;
+            margin-left: 8px;
+            font-weight: 600;
+            color: #007aff;
+            font-size: 0.75rem;
+        }
+        
+        .regenerate-button {
+            width: 100%;
+            padding: 8px 16px;
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+        
+        .regenerate-button:hover {
+            background: #0056d3;
+            transform: translateY(-1px);
+        }
+        
+        .regenerate-button:active {
+            transform: translateY(0);
+        }
+        
+        .regenerate-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         .legend-item {
@@ -887,7 +1051,7 @@
             generateButton.disabled = true;
             generateButton.innerHTML = '🎵 Generating...';
             
-            const models = ['markov', 'lstm', 'transformer'];
+            const models = ['markov', 'rnn', 'lstm', 'transformer'];
             const outputSection = document.getElementById('outputSection');
             const modelsOutput = document.getElementById('modelsOutput');
             
@@ -949,15 +1113,83 @@
             
             const modelNames = {
                 'markov': 'Markov Chain',
+                'rnn': 'Simple RNN',
                 'lstm': 'LSTM Neural Network', 
                 'transformer': 'Transformer Model'
             };
             
             const modelDescriptions = {
                 'markov': 'Statistical pattern-based generation',
-                'lstm': 'Recurrent neural network approach',
-                'transformer': 'Advanced attention-based model'
+                'rnn': 'Vanilla RNN - struggles with long-term dependencies',
+                'lstm': 'Advanced RNN with memory cells - better long-term patterns',
+                'transformer': 'Attention-based architecture for complex patterns'
             };
+            
+            const modelParameters = {
+                'markov': [
+                    { id: 'order', label: 'Markov Order', type: 'range', min: 1, max: 5, step: 1, default: 2, description: 'How many previous notes to consider' },
+                    { id: 'randomness', label: 'Randomness', type: 'range', min: 0, max: 1, step: 0.1, default: 0.3, description: 'Amount of variation in generation' }
+                ],
+                'rnn': [
+                    { id: 'temperature', label: 'Temperature', type: 'range', min: 0.1, max: 2, step: 0.1, default: 1.0, description: 'Controls randomness (higher = more creative)' },
+                    { id: 'hidden_size', label: 'Hidden Size', type: 'number', min: 32, max: 256, step: 32, default: 128, description: 'Model capacity' }
+                ],
+                'lstm': [
+                    { id: 'temperature', label: 'Temperature', type: 'range', min: 0.1, max: 2, step: 0.1, default: 1.0, description: 'Controls randomness (higher = more creative)' },
+                    { id: 'hidden_size', label: 'Hidden Size', type: 'number', min: 32, max: 256, step: 32, default: 128, description: 'Model capacity' },
+                    { id: 'num_layers', label: 'LSTM Layers', type: 'range', min: 1, max: 4, step: 1, default: 2, description: 'Number of stacked LSTM layers' }
+                ],
+                'transformer': [
+                    { id: 'temperature', label: 'Temperature', type: 'range', min: 0.1, max: 2, step: 0.1, default: 1.0, description: 'Controls randomness' },
+                    { id: 'num_heads', label: 'Attention Heads', type: 'range', min: 2, max: 16, step: 2, default: 8, description: 'Number of attention heads' },
+                    { id: 'num_layers', label: 'Transformer Layers', type: 'range', min: 1, max: 6, step: 1, default: 3, description: 'Number of transformer blocks' }
+                ]
+            };
+            
+            const params = modelParameters[modelType] || [];
+            let parametersHTML = '';
+            
+            if (params.length > 0) {
+                const paramsInputs = params.map(param => {
+                    const defaultVal = param.default;
+                    return `
+                        <div class="parameter-group">
+                            <label class="parameter-label">
+                                ${param.label}
+                                <span class="parameter-value" id="${modelType}-${param.id}-value">${defaultVal}</span>
+                            </label>
+                            <input type="${param.type}" 
+                                   id="${modelType}-${param.id}" 
+                                   class="parameter-input"
+                                   min="${param.min}" 
+                                   max="${param.max}" 
+                                   step="${param.step}" 
+                                   value="${defaultVal}"
+                                   title="${param.description}"
+                                   oninput="document.getElementById('${modelType}-${param.id}-value').textContent = this.value">
+                            <div style="font-size: 0.7rem; color: #86868b; margin-top: 2px;">${param.description}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                parametersHTML = `
+                    <div class="model-parameters">
+                        <div class="parameters-toggle" onclick="toggleParameters('${modelType}')">
+                            <div class="parameters-toggle-title">
+                                <span class="parameters-toggle-icon" id="${modelType}-toggle-icon">▶</span>
+                                <span>⚙️ Model Parameters</span>
+                            </div>
+                            <span style="font-size: 0.7rem; color: #86868b;">Click to customize</span>
+                        </div>
+                        <div class="parameters-content" id="${modelType}-parameters">
+                            ${paramsInputs}
+                            <button class="regenerate-button" onclick="regenerateWithParams('${modelType}')">
+                                🔄 Regenerate with New Parameters
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
             
             modelCard.innerHTML = `
                 <div class="model-header">
@@ -968,10 +1200,19 @@
                     ${modelDescriptions[modelType]}
                 </p>
                 
+                ${parametersHTML}
+                
                 <!-- Color Music Notation -->
                 <div class="color-notation-container">
-                    <div class="notation-title">🎨 Color Sheet Music</div>
-                    <div class="notation-scroll">
+                    <div class="notation-title">
+                        <span>🎨 Color Sheet Music</span>
+                        <button class="scroll-toggle" id="scroll-toggle-${modelType}" 
+                                onclick="toggleScrollMode('${modelType}')"
+                                title="Toggle between wrap and scroll modes">
+                            📜 Scroll Mode
+                        </button>
+                    </div>
+                    <div class="notation-scroll" id="notation-scroll-${modelType}">
                         <div class="notation-staff" id="notation-${modelType}">
                             <!-- Notes will be added here dynamically -->
                         </div>
@@ -981,7 +1222,7 @@
                     </div>
                 </div>
                 
-                <audio controls class="audio-player">
+                <audio controls class="audio-player" id="audio-${modelType}">
                     <source src="${data.audio_url}" type="audio/wav">
                     Your browser does not support the audio element.
                 </audio>
@@ -1004,6 +1245,11 @@
             
             // Add color notation visualization
             renderColorNotation(modelType, data.metadata);
+            
+            // Setup audio playback synchronization after DOM is ready
+            setTimeout(() => {
+                setupAudioSync(modelType, data.metadata);
+            }, 100);
         }
         
         function displayModelError(modelType, error) {
@@ -1091,6 +1337,7 @@
             melody.forEach((note, index) => {
                 const noteDiv = document.createElement('div');
                 noteDiv.className = 'color-note';
+                noteDiv.setAttribute('data-note-index', index);
                 
                 // Get color for this note
                 const noteColor = noteColorMap[index];
@@ -1167,6 +1414,371 @@
             }
             
             return melody;
+        }
+        
+        // Setup audio synchronization for real-time note highlighting
+        function setupAudioSync(modelType, metadata) {
+            console.log('=== setupAudioSync called ===');
+            console.log('modelType:', modelType);
+            console.log('metadata:', metadata);
+            
+            const audio = document.getElementById(`audio-${modelType}`);
+            const notationContainer = document.getElementById(`notation-${modelType}`);
+            
+            console.log('audio element:', audio);
+            console.log('notation container:', notationContainer);
+            
+            if (!audio || !notationContainer || !metadata || !metadata.melody) {
+                console.error('setupAudioSync: Missing elements or data', { 
+                    audio: !!audio, 
+                    notationContainer: !!notationContainer, 
+                    hasMetadata: !!metadata,
+                    hasMelody: metadata ? !!metadata.melody : false
+                });
+                return;
+            }
+            
+            const melody = metadata.melody;
+            const tempo = metadata.tempo || 120; // BPM
+            const beatDuration = 60 / tempo; // seconds per beat
+            
+            console.log('✓ Audio sync initialized:', { 
+                modelType, 
+                melodyLength: melody.length, 
+                tempo, 
+                beatDuration,
+                totalDuration: melody.length * beatDuration
+            });
+            
+            let currentNoteIndex = -1;
+            
+            // Test: manually highlight first note to verify CSS works
+            const firstNote = notationContainer.querySelector('[data-note-index="0"]');
+            if (firstNote) {
+                console.log('First note found, testing highlight...');
+                firstNote.classList.add('playing');
+                setTimeout(() => {
+                    firstNote.classList.remove('playing');
+                    console.log('Test highlight removed');
+                }, 1000);
+            }
+            
+            audio.addEventListener('play', () => {
+                console.log('▶ Audio started playing');
+            });
+            
+            audio.addEventListener('timeupdate', () => {
+                const currentTime = audio.currentTime;
+                
+                // Calculate which note should be playing
+                const noteIndex = Math.floor(currentTime / beatDuration);
+                
+                // If we've moved to a new note
+                if (noteIndex !== currentNoteIndex && noteIndex < melody.length) {
+                    console.log(`♪ Note ${noteIndex} at ${currentTime.toFixed(2)}s`);
+                    
+                    // Remove highlight from previous note
+                    if (currentNoteIndex >= 0) {
+                        const prevNote = notationContainer.querySelector(`[data-note-index="${currentNoteIndex}"]`);
+                        if (prevNote) {
+                            prevNote.classList.remove('playing');
+                        }
+                    }
+                    
+                    // Add highlight to current note
+                    const currentNote = notationContainer.querySelector(`[data-note-index="${noteIndex}"]`);
+                    if (currentNote) {
+                        currentNote.classList.add('playing');
+                        console.log('✓ Note highlighted:', noteIndex);
+                        
+                        // Scroll to keep current note visible
+                        const scrollContainer = notationContainer.closest('.notation-scroll');
+                        if (scrollContainer) {
+                            const noteRect = currentNote.getBoundingClientRect();
+                            const containerRect = scrollContainer.getBoundingClientRect();
+                            
+                            if (noteRect.right > containerRect.right - 50) {
+                                scrollContainer.scrollLeft += noteRect.right - containerRect.right + 50;
+                            } else if (noteRect.left < containerRect.left + 50) {
+                                scrollContainer.scrollLeft -= containerRect.left - noteRect.left + 50;
+                            }
+                        }
+                    } else {
+                        console.warn('Note element not found:', noteIndex);
+                    }
+                    
+                    currentNoteIndex = noteIndex;
+                }
+            });
+            
+            // Reset highlighting when audio ends or is seeked
+            audio.addEventListener('ended', () => {
+                console.log('■ Audio ended, resetting highlights');
+                notationContainer.querySelectorAll('.color-note.playing').forEach(note => {
+                    note.classList.remove('playing');
+                });
+                currentNoteIndex = -1;
+            });
+            
+            audio.addEventListener('seeked', () => {
+                console.log('⏩ Audio seeked, resetting highlights');
+                notationContainer.querySelectorAll('.color-note.playing').forEach(note => {
+                    note.classList.remove('playing');
+                });
+                currentNoteIndex = -1;
+            });
+            
+            console.log('✓ Audio event listeners attached for', modelType);
+        }
+        
+        // Toggle parameter controls
+        function toggleParameters(modelType) {
+            const content = document.getElementById(`${modelType}-parameters`);
+            const icon = document.getElementById(`${modelType}-toggle-icon`);
+            
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                icon.classList.remove('expanded');
+            } else {
+                content.classList.add('expanded');
+                icon.classList.add('expanded');
+            }
+        }
+        
+        // Toggle scroll mode for color notation
+        function toggleScrollMode(modelType) {
+            const scrollContainer = document.getElementById(`notation-scroll-${modelType}`);
+            const toggleButton = document.getElementById(`scroll-toggle-${modelType}`);
+            
+            if (scrollContainer.classList.contains('nowrap')) {
+                // Switch to wrap mode
+                scrollContainer.classList.remove('nowrap');
+                toggleButton.classList.remove('active');
+                toggleButton.textContent = '📜 Scroll Mode';
+                toggleButton.title = 'Switch to horizontal scroll mode';
+            } else {
+                // Switch to scroll mode
+                scrollContainer.classList.add('nowrap');
+                toggleButton.classList.add('active');
+                toggleButton.textContent = '📋 Wrap Mode';
+                toggleButton.title = 'Switch to wrapped view mode';
+            }
+        }
+        
+        // Regenerate music with custom parameters
+        function regenerateWithParams(modelType) {
+            if (!currentImageData) {
+                showError('No image data available.');
+                return;
+            }
+            
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = '🔄 Regenerating...';
+            
+            // Collect parameter values
+            const params = {};
+            const paramInputs = document.querySelectorAll(`[id^="${modelType}-"]:not([id$="-value"]):not([id$="-toggle-icon"]):not([id$="-parameters"])`);
+            
+            paramInputs.forEach(input => {
+                const paramName = input.id.replace(`${modelType}-`, '');
+                params[paramName] = input.type === 'number' ? parseInt(input.value) : parseFloat(input.value);
+            });
+            
+            console.log('Regenerating with params:', params);
+            
+            const requestData = {
+                colors: currentImageData.colors,
+                scale: document.getElementById('scale').value,
+                tempo: parseInt(document.getElementById('tempo').value),
+                duration: parseFloat(document.getElementById('duration').value),
+                model_type: modelType,
+                model_params: params
+            };
+            
+            fetch('/api/regenerate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Find the existing model card
+                    const modelCards = document.querySelectorAll('.model-card');
+                    let targetCard = null;
+                    let targetIndex = -1;
+                    
+                    modelCards.forEach((card, index) => {
+                        if (card.querySelector(`#audio-${modelType}`)) {
+                            targetCard = card;
+                            targetIndex = index;
+                        }
+                    });
+                    
+                    if (targetCard) {
+                        const modelsOutput = document.getElementById('modelsOutput');
+                        
+                        // Create a new card element
+                        const newCard = document.createElement('div');
+                        newCard.className = 'model-card';
+                        
+                        // Build the card HTML with all the content
+                        const modelNames = {
+                            'markov': 'Markov Chain',
+                            'rnn': 'Simple RNN',
+                            'lstm': 'LSTM Neural Network', 
+                            'transformer': 'Transformer Model'
+                        };
+                        
+                        const modelDescriptions = {
+                            'markov': 'Statistical pattern-based generation',
+                            'rnn': 'Vanilla RNN - struggles with long-term dependencies',
+                            'lstm': 'Advanced RNN with memory cells - better long-term patterns',
+                            'transformer': 'Attention-based architecture for complex patterns'
+                        };
+                        
+                        const modelParameters = {
+                            'markov': [
+                                { id: 'order', label: 'Markov Order', type: 'range', min: 1, max: 5, step: 1, default: 2, description: 'How many previous notes to consider' },
+                                { id: 'randomness', label: 'Randomness', type: 'range', min: 0, max: 1, step: 0.1, default: 0.3, description: 'Amount of variation in generation' }
+                            ],
+                            'rnn': [
+                                { id: 'temperature', label: 'Temperature', type: 'range', min: 0.1, max: 2, step: 0.1, default: 1.0, description: 'Controls randomness (higher = more creative)' },
+                                { id: 'hidden_size', label: 'Hidden Size', type: 'number', min: 32, max: 256, step: 32, default: 128, description: 'Model capacity' }
+                            ],
+                            'lstm': [
+                                { id: 'temperature', label: 'Temperature', type: 'range', min: 0.1, max: 2, step: 0.1, default: 1.0, description: 'Controls randomness (higher = more creative)' },
+                                { id: 'hidden_size', label: 'Hidden Size', type: 'number', min: 32, max: 256, step: 32, default: 128, description: 'Model capacity' },
+                                { id: 'num_layers', label: 'LSTM Layers', type: 'range', min: 1, max: 4, step: 1, default: 2, description: 'Number of stacked LSTM layers' }
+                            ],
+                            'transformer': [
+                                { id: 'temperature', label: 'Temperature', type: 'range', min: 0.1, max: 2, step: 0.1, default: 1.0, description: 'Controls randomness' },
+                                { id: 'num_heads', label: 'Attention Heads', type: 'range', min: 2, max: 16, step: 2, default: 8, description: 'Number of attention heads' },
+                                { id: 'num_layers', label: 'Transformer Layers', type: 'range', min: 1, max: 6, step: 1, default: 3, description: 'Number of transformer blocks' }
+                            ]
+                        };
+                        
+                        const paramsList = modelParameters[modelType] || [];
+                        let parametersHTML = '';
+                        
+                        if (paramsList.length > 0) {
+                            const paramsInputs = paramsList.map(param => {
+                                const currentValue = params[param.id] || param.default;
+                                return `
+                                    <div class="parameter-group">
+                                        <label class="parameter-label">
+                                            ${param.label}
+                                            <span class="parameter-value" id="${modelType}-${param.id}-value">${currentValue}</span>
+                                        </label>
+                                        <input type="${param.type}" 
+                                               id="${modelType}-${param.id}" 
+                                               class="parameter-input"
+                                               min="${param.min}" 
+                                               max="${param.max}" 
+                                               step="${param.step}" 
+                                               value="${currentValue}"
+                                               title="${param.description}"
+                                               oninput="document.getElementById('${modelType}-${param.id}-value').textContent = this.value">
+                                        <div style="font-size: 0.7rem; color: #86868b; margin-top: 2px;">${param.description}</div>
+                                    </div>
+                                `;
+                            }).join('');
+                            
+                            parametersHTML = `
+                                <div class="model-parameters">
+                                    <div class="parameters-toggle" onclick="toggleParameters('${modelType}')">
+                                        <div class="parameters-toggle-title">
+                                            <span class="parameters-toggle-icon" id="${modelType}-toggle-icon">▶</span>
+                                            <span>⚙️ Model Parameters</span>
+                                        </div>
+                                        <span style="font-size: 0.7rem; color: #86868b;">Click to customize</span>
+                                    </div>
+                                    <div class="parameters-content" id="${modelType}-parameters">
+                                        ${paramsInputs}
+                                        <button class="regenerate-button" onclick="regenerateWithParams('${modelType}')">
+                                            🔄 Regenerate with New Parameters
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        newCard.innerHTML = `
+                            <div class="model-header">
+                                <div class="model-title">${modelNames[modelType]}</div>
+                                <div class="model-badge model-${modelType}">${modelType.toUpperCase()}</div>
+                            </div>
+                            <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 15px;">
+                                ${modelDescriptions[modelType]}
+                            </p>
+                            
+                            ${parametersHTML}
+                            
+                            <!-- Color Music Notation -->
+                            <div class="color-notation-container">
+                                <div class="notation-title">
+                                    <span>🎨 Color Sheet Music</span>
+                                    <button class="scroll-toggle" id="scroll-toggle-${modelType}" 
+                                            onclick="toggleScrollMode('${modelType}')"
+                                            title="Toggle between wrap and scroll modes">
+                                        📜 Scroll Mode
+                                    </button>
+                                </div>
+                                <div class="notation-scroll" id="notation-scroll-${modelType}">
+                                    <div class="notation-staff" id="notation-${modelType}">
+                                        <!-- Notes will be added here dynamically -->
+                                    </div>
+                                </div>
+                                <div class="notation-legend" id="legend-${modelType}">
+                                    <!-- Legend will be added here -->
+                                </div>
+                            </div>
+                            
+                            <audio controls class="audio-player" id="audio-${modelType}">
+                                <source src="${data.audio_url}" type="audio/wav">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <div class="model-stats">
+                                <div><strong>Scale:</strong> ${data.metadata.scale}</div>
+                                <div><strong>Tempo:</strong> ${data.metadata.tempo} BPM</div>
+                                <div><strong>Duration:</strong> ${data.metadata.duration}s</div>
+                                <div><strong>Model:</strong> ${data.metadata.model_type}</div>
+                            </div>
+                            <div style="text-align: center; margin-top: 15px;">
+                                <a href="${data.audio_url}" download="chromasonic_${modelType}_${Date.now()}.wav" 
+                                   style="background: #f8f9fa; color: #495057; padding: 8px 16px; border-radius: 20px; 
+                                          text-decoration: none; font-size: 0.9rem; border: 1px solid #dee2e6;">
+                                    📥 Download ${modelType.toUpperCase()}
+                                </a>
+                            </div>
+                        `;
+                        
+                        // Replace the old card with the new one
+                        modelsOutput.insertBefore(newCard, targetCard);
+                        targetCard.remove();
+                        
+                        // Now render the color notation and setup audio sync
+                        renderColorNotation(modelType, data.metadata);
+                        setTimeout(() => {
+                            setupAudioSync(modelType, data.metadata);
+                        }, 100);
+                    }
+                } else {
+                    showError(data.error || 'Regeneration failed');
+                }
+                
+                button.disabled = false;
+                button.textContent = '🔄 Regenerate with New Parameters';
+            })
+            .catch(error => {
+                console.error('Regeneration error:', error);
+                showError('Network error: ' + error.message);
+                button.disabled = false;
+                button.textContent = '🔄 Regenerate with New Parameters';
+            });
         }
         
         // Paste image support

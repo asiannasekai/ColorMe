@@ -54,6 +54,8 @@ class MelodyGenerator:
         # Initialize the appropriate model
         if model_type == "markov":
             self.model = MarkovChainModel()
+        elif model_type == "rnn" and HAS_TORCH:
+            self.model = SimpleRNNModel()
         elif model_type == "lstm" and HAS_TORCH:
             self.model = LSTMModel()
         elif model_type == "transformer" and HAS_TRANSFORMERS:
@@ -86,8 +88,13 @@ class MelodyGenerator:
         scale_notes = self._frequencies_to_scale_notes(frequencies, scale)
         
         # Calculate number of notes needed
-        notes_per_second = tempo / 60 / 4  # Assuming quarter notes
-        total_notes = int(duration * notes_per_second)
+        # Using eighth notes (2 per beat) for more melodic content
+        beats_per_second = tempo / 60.0
+        notes_per_beat = 2  # Eighth notes
+        total_notes = int(duration * beats_per_second * notes_per_beat)
+        
+        # Ensure minimum note count
+        total_notes = max(total_notes, 16)
         
         # Generate melody using the selected model
         melody_notes = self.model.generate(
@@ -176,12 +183,13 @@ class MelodyGenerator:
     def _generate_rhythm_pattern(self, num_notes: int, tempo: int) -> List[float]:
         """Generate a rhythm pattern for the melody."""
         
-        # Basic rhythm patterns (note durations in beats)
+        # Rhythm patterns using eighth notes as base (0.5 beats each)
+        # This matches our note generation which uses 2 notes per beat
         patterns = [
-            [1.0, 1.0, 0.5, 0.5],  # Quarter, quarter, eighth, eighth
-            [2.0, 1.0, 1.0],       # Half, quarter, quarter
-            [0.5, 0.5, 1.0, 2.0],  # Eighth, eighth, quarter, half
-            [1.0, 0.5, 0.5, 1.0, 1.0],  # Quarter, eighth, eighth, quarter, quarter
+            [0.5, 0.5, 0.25, 0.25],  # Eighth, eighth, sixteenth, sixteenth
+            [0.5, 0.5, 0.5, 0.5],    # Four eighth notes
+            [0.25, 0.25, 0.5, 0.5, 0.5],  # Sixteenth, sixteenth, eighth, eighth, eighth
+            [0.5, 0.25, 0.25, 0.5],  # Eighth, sixteenth, sixteenth, eighth
         ]
         
         rhythm = []
@@ -287,6 +295,130 @@ class MarkovChainModel:
 
 
 if HAS_TORCH:
+    class SimpleRNNModel(nn.Module):
+        """Simple RNN (Vanilla RNN) melody generator for comparison with LSTM."""
+        
+        def __init__(self, input_size: int = 12, hidden_size: int = 128, num_layers: int = 2):
+            super(SimpleRNNModel, self).__init__()
+            self.input_size = input_size
+            self.hidden_size = hidden_size
+            self.num_layers = num_layers
+            
+            # Using vanilla RNN instead of LSTM
+            self.rnn = nn.RNN(input_size, hidden_size, num_layers, batch_first=True)
+            self.fc = nn.Linear(hidden_size, input_size)
+            self.softmax = nn.Softmax(dim=-1)
+            
+            self.trained = False
+        
+        def forward(self, x, hidden=None):
+            rnn_out, hidden = self.rnn(x, hidden)
+            output = self.fc(rnn_out)
+            return self.softmax(output), hidden
+        
+        def generate(
+            self,
+            seed_notes: List[int],
+            length: int,
+            scale: str = "major",
+            temperature: float = 1.0,
+            **kwargs
+        ) -> List[int]:
+            """Generate melody using simple RNN."""
+            
+            if not self.trained:
+                # Fallback to simple generation
+                return self._generate_simple(seed_notes, length, scale)
+            
+            self.eval()
+            melody = list(seed_notes)
+            
+            # Convert to one-hot encoding
+            with torch.no_grad():
+                for _ in range(length - len(seed_notes)):
+                    # Prepare input
+                    input_seq = torch.zeros(1, 1, self.input_size)
+                    if melody:
+                        last_note = melody[-1] % self.input_size
+                        input_seq[0, 0, last_note] = 1.0
+                    
+                    # Generate next note
+                    output, _ = self.forward(input_seq)
+                    probabilities = output[0, -1, :].numpy()
+                    
+                    # Apply temperature
+                    if temperature != 1.0:
+                        probabilities = np.power(probabilities, 1.0 / temperature)
+                        probabilities = probabilities / np.sum(probabilities)
+                    
+                    # Sample next note
+                    next_note = np.random.choice(len(probabilities), p=probabilities)
+                    melody.append(next_note)
+            
+            return melody
+        
+        def _generate_simple(
+            self,
+            seed_notes: List[int],
+            length: int,
+            scale: str
+        ) -> List[int]:
+            """Fallback simple generation."""
+            if not seed_notes:
+                seed_notes = [0, 2, 4]
+            
+            melody = []
+            for i in range(length):
+                base_note = seed_notes[i % len(seed_notes)]
+                if i > 0:
+                    prev_note = melody[i - 1]
+                    if random.random() < 0.3:
+                        base_note = (prev_note + random.choice([-1, 1])) % 12
+                melody.append(base_note)
+            
+            return melody
+        
+        def train_on_data(self, melodies: List[List[int]], epochs: int = 50):
+            """Train the RNN model."""
+            self.train()
+            optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+            criterion = nn.CrossEntropyLoss()
+            
+            for epoch in range(epochs):
+                total_loss = 0
+                for melody in melodies:
+                    if len(melody) < 2:
+                        continue
+                    
+                    optimizer.zero_grad()
+                    
+                    # Prepare sequences
+                    for i in range(len(melody) - 1):
+                        input_note = melody[i] % self.input_size
+                        target_note = melody[i + 1] % self.input_size
+                        
+                        # One-hot encode input
+                        x = torch.zeros(1, 1, self.input_size)
+                        x[0, 0, input_note] = 1.0
+                        
+                        # Target
+                        y = torch.tensor([target_note])
+                        
+                        # Forward pass
+                        output, _ = self.forward(x)
+                        loss = criterion(output.squeeze(), y)
+                        
+                        # Backward pass
+                        loss.backward()
+                        total_loss += loss.item()
+                    
+                    optimizer.step()
+                
+                if epoch % 10 == 0:
+                    print(f"RNN Epoch {epoch}, Loss: {total_loss / len(melodies):.4f}")
+            
+            self.trained = True
+
     class LSTMModel(nn.Module):
         """LSTM-based melody generator."""
         

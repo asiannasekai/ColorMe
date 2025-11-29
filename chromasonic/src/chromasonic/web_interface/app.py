@@ -255,7 +255,7 @@ def get_scales():
 def get_models():
     """Get available ML models."""
     return jsonify({
-        'models': ['markov', 'lstm', 'transformer']
+        'models': ['markov', 'rnn', 'lstm', 'transformer']
     })
 
 
@@ -284,6 +284,7 @@ def regenerate_melody():
         tempo = data.get('tempo', 120)
         duration = data.get('duration', 30.0)
         model_type = data.get('model_type', 'markov')
+        model_params = data.get('model_params', {})  # Custom model parameters
         
         # Update pipeline
         pipeline.update_scale(scale)
@@ -296,12 +297,13 @@ def regenerate_melody():
             wavelengths, octave_range=(3, 6)
         )
         
-        # Generate new melody
+        # Generate new melody with custom parameters
         melody = pipeline.melody_generator.generate_melody(
             frequencies,
             duration=duration,
             scale=scale,
-            tempo=tempo
+            tempo=tempo,
+            **model_params  # Pass custom parameters to the model
         )
         
         # Synthesize audio
@@ -350,4 +352,4 @@ def internal_error(e):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000, use_reloader=False)

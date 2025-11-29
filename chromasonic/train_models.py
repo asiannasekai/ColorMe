@@ -34,6 +34,70 @@ except ImportError:
     sys.exit(1)
 
 
+class SimpleRNN(nn.Module):
+    """Vanilla RNN model for melody generation (baseline comparison)."""
+    
+    def __init__(
+        self,
+        vocab_size: int = 88,
+        embedding_dim: int = 64,
+        hidden_size: int = 128,
+        num_layers: int = 2,
+        dropout: float = 0.2
+    ):
+        super().__init__()
+        
+        self.vocab_size = vocab_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        
+        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        # Using vanilla RNN instead of LSTM - no memory cells
+        self.rnn = nn.RNN(
+            embedding_dim,
+            hidden_size,
+            num_layers,
+            batch_first=True,
+            dropout=dropout if num_layers > 1 else 0
+        )
+        self.dropout = nn.Dropout(dropout)
+        self.fc = nn.Linear(hidden_size, vocab_size)
+    
+    def forward(self, x):
+        """Forward pass."""
+        # x shape: (batch_size, sequence_length)
+        embedded = self.embedding(x)
+        rnn_out, _ = self.rnn(embedded)
+        
+        # Use only the last output
+        last_output = rnn_out[:, -1, :]
+        dropped = self.dropout(last_output)
+        output = self.fc(dropped)
+        
+        return output
+    
+    def generate(self, seed: list, length: int = 16) -> list:
+        """Generate a sequence from seed."""
+        self.eval()
+        
+        generated = seed.copy()
+        
+        with torch.no_grad():
+            for _ in range(length - len(seed)):
+                # Prepare input
+                input_seq = torch.LongTensor([generated[-16:]])  # Use last 16 notes
+                
+                # Predict
+                output = self.forward(input_seq)
+                probs = torch.softmax(output[0], dim=0)
+                
+                # Sample from distribution
+                next_note = torch.multinomial(probs, 1).item()
+                generated.append(next_note)
+        
+        return generated
+
+
 class MelodyLSTM(nn.Module):
     """LSTM model for melody generation."""
     
@@ -164,6 +228,89 @@ class MelodyTransformer(nn.Module):
                 generated.append(next_note)
         
         return generated
+
+
+def train_rnn_model(args, train_data=None, val_data=None):
+    """Train vanilla RNN model for baseline comparison."""
+    print("\n" + "="*80)
+    print("Training Simple RNN Model (Baseline)")
+    print("="*80 + "\n")
+    
+    # Create model
+    model = SimpleRNN(
+        vocab_size=args.vocab_size,
+        hidden_size=args.hidden_size,
+        num_layers=args.num_layers,
+        dropout=args.dropout
+    )
+    
+    print(f"Model architecture:")
+    print(model)
+    print(f"\nTotal parameters: {sum(p.numel() for p in model.parameters()):,}")
+    
+    # Create training data if not provided
+    if train_data is None or val_data is None:
+        print(f"\nGenerating {args.num_sequences} training sequences...")
+        train_data, val_data = create_training_data(
+            num_sequences=args.num_sequences,
+            sequence_length=args.sequence_length,
+            vocab_size=args.vocab_size,
+            train_split=0.8
+        )
+    
+    print(f"Train sequences: {len(train_data)}")
+    print(f"Validation sequences: {len(val_data)}")
+    
+    # Create trainer
+    trainer = ModelTrainer(model, model_name="melody_rnn")
+    
+    # Train
+    print(f"\nStarting training for {args.epochs} epochs...")
+    history = trainer.train(
+        train_data=train_data,
+        val_data=val_data,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        learning_rate=args.learning_rate,
+        sequence_length=16,
+        early_stopping_patience=args.patience,
+        checkpoint_dir=Path(args.output_dir) / "rnn_checkpoints",
+        lr_scheduler=args.lr_scheduler
+    )
+    
+    # Test model
+    print("\nTesting RNN model...")
+    tester = ModelTester(model, model_name="Simple RNN")
+    
+    test_results = tester.evaluate(val_data[:100], sequence_length=16)
+    
+    print("\n" + "="*80)
+    print("RNN MODEL RESULTS")
+    print("="*80)
+    print(f"Final Training Loss: {history.train_losses[-1]:.4f}")
+    print(f"Final Validation Loss: {history.val_losses[-1]:.4f}")
+    print(f"Test Accuracy: {test_results['accuracy']:.2%}")
+    print(f"Test Perplexity: {test_results['perplexity']:.2f}")
+    
+    # Save results
+    output_dir = Path(args.output_dir) / "rnn_results"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Plot learning curves
+    history.plot_learning_curves(save_path=output_dir / "learning_curves.png")
+    
+    # Generate samples
+    seed = list(range(60, 68))  # C major scale
+    samples = tester.generate_samples(
+        num_samples=5,
+        seed_sequence=seed,
+        length=32,
+        temperature=1.0
+    )
+    
+    print(f"\nResults saved to: {output_dir}")
+    
+    return model, history, test_results
 
 
 def train_lstm_model(args, train_data=None, val_data=None):
@@ -356,8 +503,8 @@ def main():
                        help='Output directory for checkpoints and results')
     
     # Model selection
-    parser.add_argument('--model', type=str, default='both',
-                       choices=['lstm', 'transformer', 'both'],
+    parser.add_argument('--model', type=str, default='all',
+                       choices=['rnn', 'lstm', 'transformer', 'all'],
                        help='Which model(s) to train')
     
     args = parser.parse_args()
@@ -416,17 +563,21 @@ def main():
         print(f"\n✓ Generated: {len(train_data)} train, {len(val_data)} val, {len(test_data)} test sequences")
     
     # Train models
+    rnn_model = None
     lstm_model = None
     transformer_model = None
     
-    if args.model in ['lstm', 'both']:
+    if args.model in ['rnn', 'all']:
+        rnn_model, rnn_history, rnn_results = train_rnn_model(args, train_data, val_data)
+    
+    if args.model in ['lstm', 'all']:
         lstm_model, lstm_history = train_lstm_model(args, train_data, val_data)
     
-    if args.model in ['transformer', 'both']:
+    if args.model in ['transformer', 'all']:
         transformer_model, transformer_history = train_transformer_model(args, train_data, val_data)
     
-    # Compare models if both were trained
-    if lstm_model and transformer_model:
+    # Compare models if multiple were trained
+    if args.model == 'all' and lstm_model and transformer_model:
         test_and_compare_models(lstm_model, transformer_model, args)
     
     print("\n" + "="*80)

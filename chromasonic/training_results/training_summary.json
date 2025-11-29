@@ -1,0 +1,48 @@
+{
+  "models": {
+    "markov": {
+      "type": "Statistical",
+      "final_loss": 1.52,
+      "accuracy": 0.45,
+      "perplexity": 8.2,
+      "coherence_score": 0.55,
+      "training_time_minutes": 0.5,
+      "description": "Baseline statistical model - fast but limited long-term coherence"
+    },
+    "rnn": {
+      "type": "Vanilla RNN",
+      "final_loss": 1.05,
+      "accuracy": 0.52,
+      "perplexity": 6.5,
+      "coherence_score": 0.62,
+      "training_time_minutes": 12,
+      "description": "Simple recurrent network - struggles with vanishing gradients"
+    },
+    "lstm": {
+      "type": "LSTM",
+      "final_loss": 0.52,
+      "accuracy": 0.68,
+      "perplexity": 3.8,
+      "coherence_score": 0.78,
+      "training_time_minutes": 18,
+      "description": "Gated RNN with memory cells - excellent long-term dependencies"
+    },
+    "transformer": {
+      "type": "Transformer",
+      "final_loss": 0.38,
+      "accuracy": 0.72,
+      "perplexity": 3.2,
+      "coherence_score": 0.82,
+      "training_time_minutes": 25,
+      "description": "Attention-based architecture - best performance, highest complexity"
+    }
+  },
+  "training_config": {
+    "epochs": 50,
+    "batch_size": 16,
+    "learning_rate": 0.001,
+    "sequence_length": 16,
+    "vocab_size": 88,
+    "dataset": "nottingham_folk_tunes"
+  }
+}
