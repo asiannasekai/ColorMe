@@ -140,6 +140,15 @@ def upload_image():
         # Convert colors to hex for display
         hex_colors = [f"#{r:02x}{g:02x}{b:02x}" for r, g, b in result['colors']]
         
+        # Extract melody notes for visualization
+        melody_notes = result.get('melody', {}).get('notes', [])
+        if isinstance(melody_notes, np.ndarray):
+            melody_notes = melody_notes.tolist()
+        
+        # Update metadata with melody
+        metadata = result['metadata'].copy()
+        metadata['melody'] = melody_notes[:64]  # Limit to first 64 notes
+        
         # Clean up uploaded file
         os.remove(file_path)
         
@@ -149,7 +158,7 @@ def upload_image():
             'colors': hex_colors,
             'wavelengths': result['wavelengths'],
             'frequencies': result['frequencies'],
-            'metadata': result['metadata']
+            'metadata': metadata
         })
         
     except Exception as e:
@@ -304,6 +313,11 @@ def regenerate_melody():
         audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
         pipeline.save_audio(audio, audio_path)
         
+        # Extract melody notes for visualization
+        melody_notes = melody.get('notes', [])
+        if isinstance(melody_notes, np.ndarray):
+            melody_notes = melody_notes.tolist()
+        
         return jsonify({
             'success': True,
             'audio_url': url_for('download_audio', filename=audio_filename),
@@ -312,7 +326,8 @@ def regenerate_melody():
                 'scale': scale,
                 'tempo': tempo,
                 'duration': duration,
-                'model_type': model_type
+                'model_type': model_type,
+                'melody': melody_notes[:64]  # Limit to first 64 notes for visualization
             }
         })
         
