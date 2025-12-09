@@ -1,10 +1,10 @@
-# ColorMe → Chromasonic 🎨🎵
+#Chromasonic 🎨🎵
 
 **Transform Images into Beautiful Music Through AI and Color Science**
 
-This repository contains **Chromasonic**, a revolutionary multimodal ML pipeline that converts images into musically coherent melodies by extracting colors, mapping them to wavelengths and frequencies, then generating harmonious compositions using advanced machine learning models.
+This repository contains **Chromasonic**, a  multimodal ML pipeline that converts images into musically coherent melodies by extracting colors, mapping them to wavelengths and frequencies, then generating harmonious compositions using advanced machine learning models.
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 cd chromasonic
@@ -27,15 +27,15 @@ See the complete project in the [`chromasonic/`](./chromasonic/) directory:
 - **[notebooks/](./chromasonic/notebooks/)** - Interactive Jupyter tutorials
 - **[src/](./chromasonic/src/)** - Full source code implementation
 
-## 🎯 What Makes Chromasonic Special
+##  What Makes Chromasonic Special
 
-✨ **Scientific Foundation**: Uses real color science to map RGB → wavelengths → frequencies  
-🤖 **AI-Powered**: Markov chains, LSTM, and Transformer models for melody generation  
-🎼 **Musical Intelligence**: Supports major, minor, pentatonic, blues, and custom scales  
-🌐 **Web Interface**: Beautiful, interactive web UI for real-time conversion  
-🔊 **Professional Audio**: High-quality synthesis with ADSR envelopes and effects  
+ **Scientific Foundation**: Uses real color science to map RGB → wavelengths → frequencies  
+ **AI-Powered**: Markov chains, LSTM, and Transformer models for melody generation  
+ **Musical Intelligence**: Supports major, minor, pentatonic, blues, and custom scales  
+ **Web Interface**: Beautiful, interactive web UI for real-time conversion  
+ **Professional Audio**: High-quality synthesis with ADSR envelopes and effects  
 
-## 🎨 → 🎵 The Pipeline
+## The Pipeline
 
 1. **Image Processing**: Load and analyze images using computer vision
 2. **Color Extraction**: Extract dominant colors via K-means clustering  
@@ -44,4 +44,4 @@ See the complete project in the [`chromasonic/`](./chromasonic/) directory:
 5. **AI Melody Generation**: Create coherent melodies using ML models
 6. **Audio Synthesis**: Generate high-quality audio with customizable synthesis
 
-Experience the magic of transforming visual art into musical art! 🎭
+Experience the magic of transforming visual art into musical art! 
