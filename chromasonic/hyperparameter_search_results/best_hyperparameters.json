@@ -1,0 +1,8 @@
+{
+  "learning_rate": 0.0011840560593425996,
+  "batch_size": 32,
+  "hidden_size": 128,
+  "num_layers": 3,
+  "dropout": 0.39978114297398015,
+  "embedding_dim": 96
+}

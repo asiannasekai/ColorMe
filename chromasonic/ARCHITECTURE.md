@@ -1,65 +1,65 @@
-# 🎨 Chromasonic Project Structure
+#  Chromasonic Project Structure
 
 This document provides a comprehensive overview of the Chromasonic project architecture and components.
 
-## 📁 Directory Structure
+##  Directory Structure
 
 ```
 chromasonic/
-├── 📋 README.md              # Main project documentation
-├── 📦 setup.py               # Package setup and installation
-├── 📄 requirements.txt       # Python dependencies
-├── ⚙️ config.py             # Configuration settings
-├── 🐳 Dockerfile            # Container configuration
-├── 🐳 docker-compose.yml    # Multi-container setup
+├──  README.md              # Main project documentation
+├──  setup.py               # Package setup and installation
+├──  requirements.txt       # Python dependencies
+├──  config.py             # Configuration settings
+├──  Dockerfile            # Container configuration
+├──  docker-compose.yml    # Multi-container setup
 │
-├── 📂 src/chromasonic/       # Main source code
-│   ├── 🔧 __init__.py       # Package initialization
-│   ├── 🏭 pipeline.py       # Main pipeline orchestrator
-│   ├── 💻 main.py           # CLI interface
+├──  src/chromasonic/       # Main source code
+│   ├──  __init__.py       # Package initialization
+│   ├──  pipeline.py       # Main pipeline orchestrator
+│   ├──  main.py           # CLI interface
 │   │
-│   ├── 📸 image_processing/  # Image loading and preprocessing
+│   ├──  image_processing/  # Image loading and preprocessing
 │   │   ├── __init__.py
 │   │   └── loader.py         # ImageLoader class
 │   │
-│   ├── 🎨 color_analysis/    # Color extraction algorithms
+│   ├──  color_analysis/    # Color extraction algorithms
 │   │   ├── __init__.py
 │   │   └── extractor.py      # ColorExtractor class
 │   │
-│   ├── 🌈 wavelength_mapping/ # Color-to-wavelength conversion
+│   ├──  wavelength_mapping/ # Color-to-wavelength conversion
 │   │   ├── __init__.py
 │   │   └── converter.py      # WavelengthConverter class
 │   │
-│   ├── 🎵 melody_generation/ # AI melody generation models
+│   ├──  melody_generation/ # AI melody generation models
 │   │   ├── __init__.py
 │   │   └── models.py         # Markov, LSTM, Transformer models
 │   │
-│   ├── 🔊 audio_synthesis/   # Audio generation and effects
+│   ├──  audio_synthesis/   # Audio generation and effects
 │   │   ├── __init__.py
 │   │   └── synthesizer.py    # AudioSynthesizer class
 │   │
-│   └── 🌐 web_interface/     # Flask web application
+│   └──  web_interface/     # Flask web application
 │       ├── __init__.py
 │       ├── app.py            # Flask routes and API
 │       ├── templates/
 │       │   └── index.html    # Web UI
 │       └── static/           # CSS, JS, assets
 │
-├── 📓 notebooks/             # Jupyter notebooks
+├──  notebooks/             # Jupyter notebooks
 │   └── chromasonic_demo.ipynb # Interactive tutorial
 │
-├── 🤖 models/               # Trained ML models (saved states)
+├──  models/               # Trained ML models (saved states)
 │
-├── 📊 data/                 # Data storage
+├──  data/                 # Data storage
 │   ├── images/              # Sample and uploaded images
 │   └── audio/               # Generated audio files
 │
-└── 🧪 tests/               # Unit and integration tests
+└──  tests/               # Unit and integration tests
     ├── __init__.py
     └── test_chromasonic.py  # Test suite
 ```
 
-## 🔬 Core Components
+##  Core Components
 
 ### 1. Pipeline Orchestrator (`pipeline.py`)
 - **ChromasonicPipeline**: Main class coordinating the entire process
@@ -104,33 +104,33 @@ chromasonic/
 - Audio playback and download
 - RESTful API endpoints
 
-## 🎯 Key Features
+##  Key Features
 
-### 🎨 Advanced Color Science
+###  Advanced Color Science
 - **K-means Clustering**: Intelligent dominant color extraction
 - **HSV Color Space**: Perceptually accurate hue-to-wavelength mapping
 - **Visible Spectrum**: Scientific 380-750nm wavelength range
 - **Color Harmony**: Temperature and saturation analysis
 
-### 🎵 Musical Intelligence
+###  Musical Intelligence
 - **Multiple Scales**: Major, minor, pentatonic, blues, chromatic, modal
 - **Note Quantization**: Frequency-to-scale note mapping
 - **Chord Progressions**: Automatic harmonic sequence generation
 - **Musical Intervals**: Semitone relationship analysis
 
-### 🤖 Machine Learning Models
+###  Machine Learning Models
 - **Markov Chains**: Fast, interpretable melody generation
 - **LSTM Networks**: Deep sequence learning for musical patterns
 - **Transformers**: State-of-the-art attention-based composition
 - **Configurable Training**: Custom datasets and model parameters
 
-### 🔊 Professional Audio
+###  Professional Audio
 - **Multiple Synthesis**: Sine, additive, FM, subtractive waveforms
 - **ADSR Envelopes**: Professional attack-decay-sustain-release shaping
 - **Audio Effects**: Reverb, chorus, delay with configurable parameters
 - **High Quality**: 44.1kHz, 16-bit WAV output
 
-## 🚀 Usage Patterns
+##  Usage Patterns
 
 ### Command Line Interface
 ```bash
@@ -171,7 +171,7 @@ pipeline.save_audio(result['audio'], 'output.wav')
 3. Click "Convert" to generate music
 4. Listen to results and download audio
 
-## 🧬 Scientific Foundation
+##  Scientific Foundation
 
 ### Color-to-Wavelength Conversion
 ```
@@ -214,7 +214,7 @@ Blues Scale:     C Eb F F# G Bb (0,3,5,6,7,10)
 - Web interface configuration
 - File paths and directories
 
-## 🧪 Testing
+##  Testing
 
 ### Test Coverage
 - **Unit Tests**: Individual component functionality
@@ -229,7 +229,7 @@ python -m pytest tests/
 python tests/test_chromasonic.py
 ```
 
-## 📈 Performance
+##  Performance
 
 ### Optimization Strategies
 - **Image Sampling**: Reduce pixel count for large images
@@ -243,7 +243,7 @@ python tests/test_chromasonic.py
 - **Audio Generation**: Real-time synthesis
 - **Web Interface**: < 500ms API response time
 
-## 🔮 Future Enhancements
+##  Future Enhancements
 
 ### Planned Features
 - **Video Processing**: Extract colors from video frames
@@ -259,7 +259,7 @@ python tests/test_chromasonic.py
 - **Harmonic Analysis**: Automatic chord detection and progression
 - **Emotional Mapping**: Color psychology to musical mood
 
-## 📚 References and Credits
+##  References and Credits
 
 ### Scientific Papers
 - Color perception and wavelength mapping research
@@ -280,4 +280,3 @@ python tests/test_chromasonic.py
 
 ---
 
-*Built with ❤️ for the intersection of art, science, and technology*

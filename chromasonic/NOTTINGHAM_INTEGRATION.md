@@ -118,7 +118,7 @@ cd src/chromasonic/melody_generation
 python data_loader.py
 ```
 
-## 📊 Dataset Details
+##  Dataset Details
 
 **Nottingham Music Database:**
 - **Size:** ~1000 traditional folk tunes
@@ -137,30 +137,30 @@ python data_loader.py
 - Common keys: D major, G major, A minor
 - Common meters: 4/4, 6/8, 3/4
 
-## 🎯 Benefits of Real Data
+## Benefits of Real Data
 
 ### Before (Synthetic Data)
-- ❌ Random walk patterns
-- ❌ No musical structure
-- ❌ Poor phrase boundaries
-- ❌ Unnatural interval distributions
-- ❌ Models produce random-sounding output
+-  Random walk patterns
+- No musical structure
+- Poor phrase boundaries
+-  Unnatural interval distributions
+- Models produce random-sounding output
 
 ### After (Nottingham Dataset)
-- ✅ Real musical patterns
-- ✅ Proper phrase structure
-- ✅ Natural melodic contours
-- ✅ Musical interval distributions
-- ✅ Models produce folk-like melodies
+-  Real musical patterns
+-  Proper phrase structure
+-  Natural melodic contours
+-  Musical interval distributions
+-  Models produce folk-like melodies
 
-## 🔄 Workflow
+##  Workflow
 
 1. **First run:** Downloads and parses ABC files (~30 seconds)
 2. **Saves processed data:** Caches to `data/nottingham/processed_melodies.json`
 3. **Subsequent runs:** Loads from cache (~2 seconds)
 4. **Training:** Uses real folk melodies instead of random walks
 
-## 🧪 Testing
+##  Testing
 
 To verify the implementation works:
 
@@ -175,7 +175,7 @@ python example_nottingham_dataset.py
 python train_models.py --dataset nottingham --epochs 5 --model lstm
 ```
 
-## 📁 File Structure After First Run
+##  File Structure After First Run
 
 ```
 chromasonic/
@@ -193,7 +193,7 @@ chromasonic/
 └── TRAINING_GUIDE.md              # Updated: Dataset guide
 ```
 
-## 🎼 Musical Quality Improvements
+## Musical Quality Improvements
 
 Training on Nottingham vs synthetic data produces models that generate melodies with:
 
@@ -204,7 +204,7 @@ Training on Nottingham vs synthetic data produces models that generate melodies 
 5. **Contour variety** - Arch shapes, ascending/descending patterns
 6. **Repetition/variation** - Musical motifs that repeat and develop
 
-## 🔮 Future Enhancements
+##  Future Enhancements
 
 The data loader is designed to be extensible. Future datasets could include:
 
@@ -214,7 +214,7 @@ The data loader is designed to be extensible. Future datasets could include:
 - **Celtic ABC Tunes** - More folk music
 - **User-uploaded MIDI** - Custom training data
 
-## 📝 Documentation Updates
+##  Documentation Updates
 
 All documentation has been updated:
 - ✅ TRAINING_GUIDE.md - Dataset selection guide
@@ -222,9 +222,7 @@ All documentation has been updated:
 - ✅ Code comments - Comprehensive docstrings
 - ✅ Example script - Interactive demo
 
-## 🎉 Summary
 
-The Nottingham dataset integration is **complete and production-ready**. Models can now train on real folk music, producing significantly better melodic output than synthetic random walks.
 
 **To start training with real music:**
 

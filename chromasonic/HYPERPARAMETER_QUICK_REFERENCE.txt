@@ -1,0 +1,231 @@
+# Hyperparameter Search - Quick Reference
+
+## Installation
+```bash
+pip install optuna
+```
+
+## Run Search (Basic)
+```bash
+cd chromasonic
+python hyperparameter_search_example.py --n-trials 10 --epochs 15
+```
+
+## Run Search (Advanced)
+```bash
+python hyperparameter_search_example.py \
+    --n-trials 50 \
+    --epochs 20 \
+    --n-sequences 500 \
+    --device cuda \
+    --output-dir my_results \
+    --plot
+```
+
+## Integrated Training
+```bash
+# Step 1: Search for best hyperparameters
+python train_models_integration.py --mode search --model rnn --n-trials 20
+
+# Step 2: Train with best parameters found
+python train_models_integration.py --mode train_best --model rnn
+```
+
+## View Results
+```bash
+# Best parameters (JSON)
+cat hyperparameter_search_results/best_hyperparameters.json
+
+# Detailed results
+cat hyperparameter_search_results/optimization_results.json
+
+# Human-readable report
+cat hyperparameter_search_results/optimization_report.txt
+```
+
+## In Your Code
+```python
+from chromasonic.melody_generation.hyperparameter_search import (
+    HyperparameterSearchSpace,
+    HyperparameterOptimizer
+)
+from chromasonic.melody_generation.training import create_training_data
+
+# 1. Create search space
+search_space = HyperparameterSearchSpace(
+    learning_rate_range=(1e-5, 1e-2),
+    batch_size_options=[16, 32, 64],
+    hidden_size_range=(64, 512),
+    num_layers_range=(1, 4),
+    dropout_range=(0.0, 0.5),
+    embedding_dim_range=(32, 256),
+    num_epochs=20
+)
+
+# 2. Create optimizer
+optimizer = HyperparameterOptimizer(
+    model_class=YourModelClass,
+    search_space=search_space,
+    device='cuda'
+)
+
+# 3. Run optimization
+results = optimizer.optimize(
+    train_data=train_data,
+    val_data=val_data,
+    vocab_size=88,
+    n_trials=20
+)
+
+# 4. Get best parameters
+best_params = results['best_params']
+# {'learning_rate': 0.001, 'batch_size': 32, ...}
+```
+
+## Command Line Reference
+
+### hyperparameter_search_example.py
+```
+--n-trials INT        Number of trials (default: 10)
+--epochs INT          Epochs per trial (default: 15)
+--n-sequences INT     Training sequences (default: 100)
+--output-dir PATH     Output directory (default: hyperparameter_search_results)
+--device STR          'cpu' or 'cuda' (default: auto-detect)
+--plot               Generate plots
+```
+
+### train_models_integration.py
+```
+--mode STR            'search' or 'train_best' (default: search)
+--model STR           'rnn' or 'transformer' (default: rnn)
+--n-trials INT        Trials for search (default: 10)
+--epochs INT          Epochs per trial (default: 15)
+--device STR          'cpu' or 'cuda' (default: auto-detect)
+--best-params-file    Path to best hyperparameters JSON
+```
+
+## Files Generated
+
+```
+hyperparameter_search_results/
+├── best_hyperparameters.json        ← Use this for training
+├── optimization_results.json        ← All trial data
+├── optimization_report.txt          ← Top 10 trials
+└── optimization_history.png         ← Visualization
+```
+
+## Key Parameters Explained
+
+| Parameter | What It Does | Typical Range |
+|-----------|-------------|---------------|
+| learning_rate | How fast model learns | 0.00001 - 0.01 |
+| batch_size | Samples per update | 8, 16, 32, 64, 128 |
+| hidden_size | Units per hidden layer | 64 - 512 |
+| num_layers | Network depth | 1 - 6 |
+| dropout | Regularization (0=none) | 0.0 - 0.5 |
+| embedding_dim | Embedding size | 32 - 256 |
+
+## Common Issues & Solutions
+
+**"Optuna not installed"**
+```bash
+pip install optuna
+```
+
+**Out of Memory**
+```bash
+# Use smaller batches
+python hyperparameter_search_example.py --n-trials 10 --epochs 10
+# Or use CPU
+--device cpu
+```
+
+**Too Slow**
+```bash
+# Fewer trials
+--n-trials 5
+# Fewer epochs
+--epochs 10
+# Use GPU
+--device cuda
+```
+
+**Poor Results**
+```bash
+# More trials = better search
+--n-trials 50
+# Wider search space - edit the script
+# More training sequences
+--n-sequences 1000
+```
+
+## Expected Output
+
+When running:
+```
+================================================================================
+HYPERPARAMETER OPTIMIZATION FOR MELODY GENERATION
+================================================================================
+
+Device: cuda
+Number of trials: 10
+Epochs per trial: 15
+Training sequences: 100
+
+Generating training data...
+  Train sequences: 80
+  Validation sequences: 20
+
+Trial 1: {'learning_rate': 0.0012, 'batch_size': 32, ...}
+Trial 1 Results:
+  Final Val Loss: 2.3456
+  Best Val Loss: 2.2145 (epoch 8)
+  Training Time: 125.45s
+  Model Parameters: 127,488
+  ✓ New best! Validation loss: 2.2145
+
+... (Trials 2-10) ...
+
+================================================================================
+OPTIMIZATION COMPLETE
+================================================================================
+Total Time: 1245.67s
+Trials Completed: 10
+Best Validation Loss: 1.8234
+
+Best Hyperparameters:
+  learning_rate: 0.0015
+  batch_size: 32
+  hidden_size: 192
+  num_layers: 2
+  dropout: 0.2
+  embedding_dim: 64
+================================================================================
+
+Results saved to: hyperparameter_search_results/
+  ✓ best_hyperparameters.json
+  ✓ optimization_results.json
+  ✓ optimization_report.txt
+  ✓ optimization_history.png (if plotting enabled)
+```
+
+## Next Steps After Optimization
+
+1. **Use Best Parameters**: Train final model with found hyperparameters
+2. **Fine-tune**: Run another search with narrower ranges around best values
+3. **Ensemble**: Train multiple models with top-5 hyperparameter sets
+4. **Test**: Evaluate on held-out test set
+5. **Save**: Keep the best_hyperparameters.json for reproducibility
+
+## Documentation Files
+
+- **HYPERPARAMETER_SEARCH.md** - Complete guide with examples
+- **HYPERPARAMETER_SEARCH_IMPLEMENTATION.md** - Technical details
+- **hyperparameter_search_example.py** - Runnable example
+- **train_models_integration.py** - Integration with training pipeline
+
+## Useful Links
+
+- [Optuna Documentation](https://optuna.readthedocs.io/)
+- [Bayesian Optimization Explained](https://en.wikipedia.org/wiki/Bayesian_optimization)
+- [Hyperparameter Tuning Best Practices](https://arxiv.org/abs/1810.03779)

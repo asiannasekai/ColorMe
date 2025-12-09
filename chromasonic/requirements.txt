@@ -37,3 +37,6 @@ gunicorn>=20.1.0
 tqdm>=4.62.0
 joblib>=1.1.0
 scipy>=1.7.0
+
+# Hyperparameter Optimization
+optuna>=3.0.0

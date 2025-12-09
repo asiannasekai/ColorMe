@@ -1,0 +1,159 @@
+HYPERPARAMETER OPTIMIZATION REPORT
+================================================================================
+
+Timestamp: 2025-12-09T02:55:12.565552
+Number of Trials: 20
+Best Validation Loss: 1.7142
+
+BEST HYPERPARAMETERS:
+--------------------------------------------------------------------------------
+  learning_rate       : 0.0011840560593425996
+  batch_size          : 32
+  hidden_size         : 128
+  num_layers          : 3
+  dropout             : 0.39978114297398015
+  embedding_dim       : 96
+
+================================================================================
+TOP 10 TRIALS:
+--------------------------------------------------------------------------------
+
+Rank 1: Trial 16
+  Val Loss: 1.7142
+  Train Loss: 1.5676
+  Best Epoch: 9
+  Training Time: 20.40s
+  Parameters: 114,776
+  Hyperparameters:
+    learning_rate: 0.0011840560593425996
+    batch_size: 32
+    hidden_size: 128
+    num_layers: 3
+    dropout: 0.39978114297398015
+    embedding_dim: 96
+
+Rank 2: Trial 19
+  Val Loss: 1.7172
+  Train Loss: 1.5155
+  Best Epoch: 14
+  Training Time: 15.90s
+  Parameters: 66,968
+  Hyperparameters:
+    learning_rate: 0.0006013363810420989
+    batch_size: 32
+    hidden_size: 96
+    num_layers: 3
+    dropout: 0.19113029601556275
+    embedding_dim: 64
+
+Rank 3: Trial 13
+  Val Loss: 1.7230
+  Train Loss: 1.6179
+  Best Epoch: 7
+  Training Time: 13.94s
+  Parameters: 54,232
+  Hyperparameters:
+    learning_rate: 0.001844788667313535
+    batch_size: 16
+    hidden_size: 96
+    num_layers: 2
+    dropout: 0.38666697882764905
+    embedding_dim: 96
+
+Rank 4: Trial 14
+  Val Loss: 1.7599
+  Train Loss: 1.5556
+  Best Epoch: 5
+  Training Time: 14.24s
+  Parameters: 81,752
+  Hyperparameters:
+    learning_rate: 0.0012690764532532696
+    batch_size: 16
+    hidden_size: 128
+    num_layers: 2
+    dropout: 0.3931731749858164
+    embedding_dim: 96
+
+Rank 5: Trial 18
+  Val Loss: 1.7855
+  Train Loss: 1.6854
+  Best Epoch: 13
+  Training Time: 21.42s
+  Parameters: 114,776
+  Hyperparameters:
+    learning_rate: 0.003248439211432794
+    batch_size: 32
+    hidden_size: 128
+    num_layers: 3
+    dropout: 0.3604055718686628
+    embedding_dim: 96
+
+Rank 6: Trial 0
+  Val Loss: 1.7974
+  Train Loss: 1.6374
+  Best Epoch: 15
+  Training Time: 11.98s
+  Parameters: 41,496
+  Hyperparameters:
+    learning_rate: 0.0001329291894316216
+    batch_size: 16
+    hidden_size: 96
+    num_layers: 1
+    dropout: 0.023233444867279785
+    embedding_dim: 128
+
+Rank 7: Trial 10
+  Val Loss: 1.7991
+  Train Loss: 1.5713
+  Best Epoch: 4
+  Training Time: 8.95s
+  Parameters: 37,720
+  Hyperparameters:
+    learning_rate: 0.004849010455090225
+    batch_size: 16
+    hidden_size: 64
+    num_layers: 2
+    dropout: 0.00581087204807168
+    embedding_dim: 128
+
+Rank 8: Trial 6
+  Val Loss: 1.8472
+  Train Loss: 1.3386
+  Best Epoch: 8
+  Training Time: 40.88s
+  Parameters: 395,864
+  Hyperparameters:
+    learning_rate: 0.00043664735929796326
+    batch_size: 32
+    hidden_size: 256
+    num_layers: 3
+    dropout: 0.23915999152443407
+    embedding_dim: 128
+
+Rank 9: Trial 15
+  Val Loss: 1.8553
+  Train Loss: 1.5162
+  Best Epoch: 7
+  Training Time: 19.99s
+  Parameters: 115,416
+  Hyperparameters:
+    learning_rate: 0.0015232346427432695
+    batch_size: 16
+    hidden_size: 160
+    num_layers: 2
+    dropout: 0.39896167333820615
+    embedding_dim: 96
+
+Rank 10: Trial 17
+  Val Loss: 1.8558
+  Train Loss: 1.4075
+  Best Epoch: 10
+  Training Time: 26.77s
+  Parameters: 166,936
+  Hyperparameters:
+    learning_rate: 0.0014104385657641592
+    batch_size: 32
+    hidden_size: 160
+    num_layers: 3
+    dropout: 0.3488718753497698
+    embedding_dim: 96
