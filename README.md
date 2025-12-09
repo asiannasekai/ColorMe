@@ -1,4 +1,4 @@
-#Chromasonic 🎨🎵
+##Chromasonic 
 
 **Transform Images into Beautiful Music Through AI and Color Science**
 
